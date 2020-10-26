@@ -2,6 +2,11 @@
 # Details: https://books.ropensci.org/drake/plans.html
 
 plan <- drake_plan(
-  data = read_data(),
+  
+  # original data 
+  
+  orig_data = read_data(),
+  orig_key = read_csv(file_in("Processed CSVs/key.csv")),
+  
 )
 

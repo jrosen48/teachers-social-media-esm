@@ -1,6 +1,10 @@
-# Custom functions are an important part of a drake workflow.
-# This is where you write them.
-# Details: https://books.ropensci.org/drake/plans.html#functions
+read_and_label <- function(f) {
+  d <- read_csv(f)
+  f_after_directory <- str_split(f, "CSVs/")
+  f_after_directory <- map_chr(f_after_directory, ~.[2])
+  d$time_point <- as.integer(str_sub(f_after_directory, start = 1, end = 1))
+  d
+}
 
 read_data <- function() {
   f <- list.files("Processed CSVs", full.names = T)
@@ -10,20 +14,11 @@ read_data <- function() {
   d
 }
 
-read_and_label <- function(f) {
-  d <- read_csv(f)
-  f_after_directory <- str_split(f, "CSVs/")
-  f_after_directory <- map_chr(f_after_directory, ~.[2])
-  d$time_point <- as.integer(str_sub(f_after_directory, start = 1, end = 1))
-  d
-}
-
 # f <- list.files("Teachers Social Media COVID", full.names = T)
 
 # dnew <- f %>% map_df(read_csv, skip=2)
 
 d <- read_data()
-
 key <- read_csv("Processed CSVs/key.csv")
 
 key$Q1_30
