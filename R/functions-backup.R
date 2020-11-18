@@ -18,8 +18,6 @@ read_data <- function() {
 
 # dnew <- f %>% map_df(read_csv, skip=2)
 
-d <- read_data()
-key <- read_csv("Processed CSVs/key.csv")
 
 key$Q1_30
 key$Q1_27
