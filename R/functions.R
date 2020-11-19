@@ -135,16 +135,27 @@ replace_chars <- function(x) {
   ifelse(is.na(x), 0, 1)
 }
 
-prep_data_for_modeling <- function(all_data, n) {
-
-  all_data %>% 
-    select(recipient_email, survey_period, contains("q21")) %>% 
-    select(recipient_email, survey_period, matches(str_c("_", n, "$"))) %>% 
-    mutate_at(3:11, my_func) %>% 
+prep_data_for_modeling <- function(all_data, q_number, item_n, stress = NULL) {
+  
+  all_data <- all_data %>% 
+    select(recipient_email, survey_period, time_point, contains(str_c("q", q_number))) %>% 
+    select(recipient_email, survey_period, time_point, matches(str_c("_", item_n, "$"))) %>% # this grabs the types of responses (how, why)
+    select(-matches("_8_"), -matches("_9_")) %>% # this gets rid of none and other
+    mutate_at(4:10, my_func) %>% 
     mutate_all(replace_na, 0) %>% 
     rowwise() %>% 
-    mutate(s = sum(c_across(3:11))) %>% 
-    select(recipient_email, survey_period, s)
+    mutate(s = sum(c_across(4:10))) %>% 
+    select(recipient_email, survey_period, time_point, s)
+  
+  if (!is.null(stress)) {
+    all_data <- all_data %>% 
+      left_join(stress)
+    
+    return(all_data)
+  }
+  
+  all_data
+  
 }
 
 prep_why_sm_to_plot <- function(d) {

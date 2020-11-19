@@ -1,0 +1,11 @@
+name: Teachers on social media
+output_dir: '.'
+navbar:
+  title: #NGSSchat Sentiment Analysis
+  left:
+  - text: Home
+    href: index.html
+  - text: Output
+    href: output.html
+output:
+  html_document:
