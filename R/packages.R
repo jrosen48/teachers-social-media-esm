@@ -7,6 +7,7 @@ library(ggiraphExtra)
 library(here)
 library(janitor)
 library(conflicted)
+library(lme4)
 
 conflict_prefer("gather", "tidyr")
 conflict_prefer("filter", "dplyr")

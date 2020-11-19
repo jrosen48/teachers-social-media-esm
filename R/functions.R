@@ -25,59 +25,54 @@ my_func <- function(x) {
 prep_how_sm_to_plot <- function(d) {
   
   d1 <- d %>% 
-    dplyr::select(recipient_email, time_point, q21_1_1:q21_1_7) %>% 
-    purrr::set_names(c("email", "time",
-                       "Posting", "Sharing", "Replying", 
-                       "Bookmarking", "Searching", "Subscribing", 
-                       "Messaging")) %>% 
+    dplyr::select(recipient_email, time_point, q19_1_1:q19_1_9) %>% 
+    set_names(c("recipient_email", "platform",
+                c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)"))) %>% 
     mutate(platform = "twitter")
   
   d2 <- d %>% 
-    select(recipient_email, time_point, q21_2_1:q21_2_7) %>% 
-    set_names(c("email", "time",
-                "Posting", "Sharing", "Replying", 
-                "Bookmarking", "Searching", "Subscribing", 
-                "Messaging")) %>% 
+    dplyr::select(recipient_email, time_point, q19_2_1:q19_2_9) %>% 
+    set_names(c("recipient_email", "platform",
+                c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)"))) %>% 
+    
     mutate(platform = "facebook")
   
   d3 <- d %>% 
-    select(recipient_email, time_point, q21_4_1:q21_4_7) %>% 
-    set_names(c("email", "time",
-                "Posting", "Sharing", "Replying", 
-                "Bookmarking", "Searching", "Subscribing", 
-                "Messaging")) %>% 
+    dplyr::select(recipient_email, time_point, q19_4_1:q19_4_9) %>% 
+    set_names(c("recipient_email", "platform",
+                c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)"))) %>% 
+    
     mutate(platform = "pinterest")
   
   d4 <- d %>% 
-    select(recipient_email, time_point, q21_5_1:q21_5_7) %>% 
-    set_names(c("email", "time",
-                "Posting", "Sharing", "Replying", 
-                "Bookmarking", "Searching", "Subscribing", 
-                "Messaging")) %>% 
+    dplyr::select(recipient_email, time_point, q19_5_1:q19_5_9) %>% 
+    set_names(c("recipient_email", "platform",
+                c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)"))) %>% 
+    
     mutate(platform = "instagram")
   
   d5 <- d %>% 
-    select(recipient_email, time_point, q21_7_1:q21_7_7) %>% 
-    set_names(c("email", "time",
-                "Posting", "Sharing", "Replying", 
-                "Bookmarking", "Searching", "Subscribing", 
-                "Messaging")) %>% 
-    mutate(platform = "instagram")
+    dplyr::select(recipient_email, time_point, q19_7_1:q19_7_9) %>% 
+    set_names(c("recipient_email", "platform",
+                c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)"))) %>% 
+    
+    mutate(platform = "blogs")
   
   to_plot <- bind_rows(d1, d2, d3, d4, d5) %>% 
-    mutate_at(vars(Posting:Messaging), my_func) %>% 
-    gather(key, val, -email, -time, -platform) %>%
+    mutate_if(is.numeric, my_func) %>% 
+    gather(key, val, -recipient_email, -platform) %>%
     mutate(platform = as.factor(platform),
            platform2 = as.integer(platform),
            platform = tools::toTitleCase(as.character(platform)))
   
   to_plot_split <- to_plot %>% 
-    mutate(val = if_else(is.na(val), 0, val)) %>% 
-    group_by(email, platform, key) %>%
+    mutate(val = ifelse(is.na(val), 0, 1)) %>% 
+    group_by(recipient_email, platform, key) %>%
     summarize(sum_val = mean(val)) %>% 
     spread(key, sum_val)
   
-  to_plot_split
+  to_plot_split %>% 
+    rename(email = recipient_email)
   
 }
 
@@ -140,6 +135,18 @@ replace_chars <- function(x) {
   ifelse(is.na(x), 0, 1)
 }
 
+prep_data_for_modeling <- function(d, n) {
+
+  all_data %>% 
+    select(recipient_email, survey_period, contains("q21")) %>% 
+    select(recipient_email, survey_period, matches(str_c("_", n, "$"))) %>% 
+    mutate_at(3:11, my_func) %>% 
+    mutate_all(replace_na, 0) %>% 
+    rowwise() %>% 
+    mutate(s = sum(c_across(3:11))) %>% 
+    select(recipient_email, survey_period, s)
+}
+
 calc_total_responses <- function(questions, d, n) {
   vec <- c(((questions - 1) * n):(questions * n))
   dd <- select(d, all_of(vec))
@@ -147,139 +154,125 @@ calc_total_responses <- function(questions, d, n) {
   dd %>% 
     mutate_all(replace_chars) %>% 
     summarize_all(sum)
-    # gather(key, val) %>%
-    # summarize(sum_n = sum(val))
+  # gather(key, val) %>%
+  # summarize(sum_n = sum(val))
 }
 
-all_data %>% 
-  select(q19_1_1:q19_7_9) %>% 
-  gather(key, val) %>% 
-  separate(key, into = c("question", "platform", "item")) %>% 
-  mutate(val = replace_chars(val))
-
-summarize_responses_why <- function(all_data) {
+calc_total_responses_sum <- function(d, questions, n) {
+  vec <- c(((questions - 1) * n):(questions * n))
+  dd <- select(d, all_of(vec))
   
-  d <- select(all_data, contains("q19_"))
-  
-  out_vec <- 1:9 %>% 
-    map(calc_total_responses, d, n = 9) %>% 
-    unlist()
-  
-  out_label <- c(orig_key$Q19_1_1, orig_key$Q19_1_2,
-                 orig_key$Q19_1_3, orig_key$Q19_1_4,
-                 orig_key$Q19_1_5, orig_key$Q19_1_6,
-                 orig_key$Q19_1_7, orig_key$Q19_1_8,
-                 orig_key$Q19_1_9) %>% 
-    str_sub(start = 82) %>% 
-    tools::toTitleCase()
-  
-  res <- tibble(out_vec, out_label) %>% 
-    mutate(var = str_c("Q19_1_", 1:9)) %>% 
-    select(var, label = out_label, n = out_vec)
-  
-  res
-  
+  dd %>% 
+    mutate_all(replace_chars) %>% 
+    rowwise() %>% 
+    mutate(m = mean(c_across(1:9)))
 }
-
-summarize_responses_how <- function(all_data) {
-  
-  d <- select(all_data, contains("q21_"))
-  
-  out_vec <- 1:7 %>% 
-    map(calc_total_responses, d, n = 7) %>% 
-    unlist()
-  
-  out_label <- c(orig_key$Q21_1_1, orig_key$Q21_1_2,
-                 orig_key$Q21_1_3, orig_key$Q21_1_4,
-                 orig_key$Q21_1_5, orig_key$Q21_1_6,
-                 orig_key$Q21_1_7) %>% 
-    str_sub(start = 87) %>% 
-    tools::toTitleCase()
-  
-  res <- tibble(out_vec, out_label) %>% 
-    mutate(var = str_c("Q21_1_", 1:7)) %>% 
-    select(var, label = out_label, n = out_vec)
-  
-  res
-  
-}
-
-summarize_responses_why(all_data)
-summarize_responses_how(all_data)
-
-# finding material for class" 30 RESOURCES or LEARN
-# > orig_key$Q19_1_2
-# sharing my materials" 186 *** SHARE
-# > orig_key$Q19_1_3
-# sharing my experiences" 12 SHARE
-# > orig_key$Q19_1_4
-# learning about or reviewing curricular content" 94 *** LEARN
-# > orig_key$Q19_1_5
-# learning about or reviewing teaching strategies" 75 *** LEARN
-# > orig_key$Q19_1_6
-# connecting with other educators" 5 CONNECT
-# > orig_key$Q19_1_7
-# seeking emotional support" 181 *** CONNECT
-# > orig_key$Q19_1_8
-# following or engaging with specific organizations (e.g., NCTM)" 0 - FOLLOWING
-# > orig_key$Q19_1_9
-# following or engaging with specific websites (e.g., Teachers Pay Teachers)" 9 - FOLLOWING
 
 prep_why_sm_to_plot <- function(d) {
   
   d1 <- d %>% 
-    dplyr::select(recipient_email, time_point, q19_1_1:q19_1_9) %>% 
-    purrr::set_names(c("email", "time",
-                       "Posting", "Sharing", "Replying", 
-                       "Bookmarking", "Searching", "Subscribing", 
-                       "Messaging")) %>% 
+    dplyr::select(recipient_email, time_point, q21_1_1:q21_1_7) %>% 
+    set_names(c("recipient_email", "platform",
+                c("creating posts or pages", "sharing or reposting others' posts", "replying to others' posts", "bookmarking or saving posts or pages", "searching (through a search bar or function)", "subscribed to or followed a person, page, or resource", "contacted a page or other user privately"))) %>% 
     mutate(platform = "twitter")
   
   d2 <- d %>% 
-    select(recipient_email, time_point, q21_2_1:q21_2_7) %>% 
-    set_names(c("email", "time",
-                "Posting", "Sharing", "Replying", 
-                "Bookmarking", "Searching", "Subscribing", 
-                "Messaging")) %>% 
+    dplyr::select(recipient_email, time_point, q21_2_1:q21_2_7) %>% 
+    set_names(c("recipient_email", "platform",
+                c("creating posts or pages", "sharing or reposting others' posts", "replying to others' posts", "bookmarking or saving posts or pages", "searching (through a search bar or function)", "subscribed to or followed a person, page, or resource", "contacted a page or other user privately"))) %>% 
+    
     mutate(platform = "facebook")
   
   d3 <- d %>% 
-    select(recipient_email, time_point, q21_4_1:q21_4_7) %>% 
-    set_names(c("email", "time",
-                "Posting", "Sharing", "Replying", 
-                "Bookmarking", "Searching", "Subscribing", 
-                "Messaging")) %>% 
+    dplyr::select(recipient_email, time_point, q21_4_1:q21_4_7) %>% 
+    set_names(c("recipient_email", "platform",
+                c("creating posts or pages", "sharing or reposting others' posts", "replying to others' posts", "bookmarking or saving posts or pages", "searching (through a search bar or function)", "subscribed to or followed a person, page, or resource", "contacted a page or other user privately"))) %>% 
+    
     mutate(platform = "pinterest")
   
   d4 <- d %>% 
-    select(recipient_email, time_point, q21_5_1:q21_5_7) %>% 
-    set_names(c("email", "time",
-                "Posting", "Sharing", "Replying", 
-                "Bookmarking", "Searching", "Subscribing", 
-                "Messaging")) %>% 
+    dplyr::select(recipient_email, time_point, q21_5_1:q21_5_7) %>%  
+    set_names(c("recipient_email", "platform",
+                c("creating posts or pages", "sharing or reposting others' posts", "replying to others' posts", "bookmarking or saving posts or pages", "searching (through a search bar or function)", "subscribed to or followed a person, page, or resource", "contacted a page or other user privately"))) %>% 
+    
     mutate(platform = "instagram")
   
   d5 <- d %>% 
-    select(recipient_email, time_point, q21_7_1:q21_7_7) %>% 
-    set_names(c("email", "time",
-                "Posting", "Sharing", "Replying", 
-                "Bookmarking", "Searching", "Subscribing", 
-                "Messaging")) %>% 
-    mutate(platform = "instagram")
+    dplyr::select(recipient_email, time_point, q21_7_1:q21_7_7) %>% 
+    set_names(c("recipient_email", "platform",
+                c("creating posts or pages", "sharing or reposting others' posts", "replying to others' posts", "bookmarking or saving posts or pages", "searching (through a search bar or function)", "subscribed to or followed a person, page, or resource", "contacted a page or other user privately"))) %>% 
+    
+    mutate(platform = "blogs")
   
   to_plot <- bind_rows(d1, d2, d3, d4, d5) %>% 
-    mutate_at(vars(Posting:Messaging), my_func) %>% 
-    gather(key, val, -email, -time, -platform) %>%
+    mutate_if(is.numeric, my_func) %>% 
+    gather(key, val, -recipient_email, -platform) %>%
     mutate(platform = as.factor(platform),
            platform2 = as.integer(platform),
            platform = tools::toTitleCase(as.character(platform)))
   
   to_plot_split <- to_plot %>% 
-    mutate(val = if_else(is.na(val), 0, val)) %>% 
-    group_by(email, platform, key) %>%
+    mutate(val = ifelse(is.na(val), 0, 1)) %>% 
+    group_by(recipient_email, platform, key) %>%
     summarize(sum_val = mean(val)) %>% 
     spread(key, sum_val)
   
-  to_plot_split
+  to_plot_split %>% 
+    rename(email = recipient_email)
+  
+}
+
+plot_subset_of_teachers_why <- function(data_to_plot) {
+  
+  data_to_plot %>% 
+    ungroup() %>% 
+    mutate(email = as.integer(as.factor(email))) %>% 
+    filter(email %in% c(14, 6, 4, 13)) %>% 
+    mutate(email = str_c("Respondent ", email),
+           email = factor(email, levels = c("Respondent 4", 
+                                            "Respondent 6",
+                                            "Respondent 13",
+                                            "Respondent 14"))) %>% 
+    ggiraphExtra::ggRadar(aes(group = "platform", facet = "email"), use.label = FALSE) +
+    scale_color_discrete(NULL) +
+    scale_fill_discrete(NULL) +
+    theme_bw() +
+    theme(axis.text.y = element_blank(),
+          axis.ticks.y = element_blank()) +
+    theme(legend.position = "top",
+          text = element_text(size = 9, family = "Times")) +
+    theme(legend.text=element_text(size=14)) +
+    theme(strip.text.x = element_text(size = 14)) +
+    ggtitle("Why Teachers Use Social Media") +
+    theme(plot.title = element_text(size=22, hjust = .5)) +
+    labs(caption = "Scale ranges from 1 (always use) to 0 (never use).") +
+    theme(plot.caption = element_text(size=12, hjust = .5)) +
+    scale_color_brewer(NULL, type = "qual", palette = 2) +
+    scale_fill_brewer(NULL, type = "qual", palette = 2)
+  
+  ggsave(here("img", "subset-teachers-why.png"))
+  
+}
+
+plot_all_teachers_why <- function(data_to_plot) {
+  
+  data_to_plot %>% 
+    ungroup() %>% 
+    mutate(email = as.integer(as.factor(email))) %>% 
+    ggiraphExtra::ggRadar(aes(group = "platform", facet = "email"), use.label = FALSE) +
+    scale_color_discrete(NULL) +
+    scale_fill_discrete(NULL) +
+    theme_bw() +
+    theme(axis.text.y = element_blank(),
+          axis.ticks.y = element_blank()) +
+    theme(legend.position = "top",
+          text = element_text(size = 9, family = "Times")) +
+    theme(legend.text=element_text(size=14)) +
+    theme(strip.text.x = element_text(size = 14)) +
+    ggtitle("Why Teachers Use Social Media") +
+    theme(plot.title = element_text(size=22, hjust = .5)) +
+    theme(plot.caption = element_text(size=12, hjust = .5))
+  
+  ggsave(here("img", "all-teachers-why.png"), width = 12, height = 12)
   
 }
