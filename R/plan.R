@@ -8,7 +8,7 @@ plan <- drake_plan(
   orig_data = list.files(here("data-raw", "orig", "processed"), full.names = T) %>% 
     map_df(read_and_label) %>% 
     clean_names() %>% 
-    select(recipient_email, time_point, q1_27:q1_33, q19_9_1:q19_9_9, q21_1_1:q21_9_7) %>% 
+    select(recipient_email, time_point, q1_27:q1_33, q19_1_1:q19_9_9, q21_1_1:q21_9_7) %>% 
     mutate(survey_period = "orig"),
   
   orig_key = read_csv(here("data-raw", "orig", "key.csv")),
@@ -17,7 +17,7 @@ plan <- drake_plan(
   
   new_data = list.files(here("data-raw", "covid"), full.names = T) %>% 
     map_df(read_and_slice) %>% 
-    select(recipient_email, time_point, q1_27:q1_33, q19_9_1:q19_9_9, q21_1_1:q21_9_7) %>% 
+    select(recipient_email, time_point, q1_27:q1_33, q19_1_1:q19_9_9, q21_1_1:q21_9_7) %>% 
     mutate(survey_period = "covid"),
   
   # combined data
@@ -31,7 +31,7 @@ plan <- drake_plan(
   # overall freq of use
   freq_of_use = all_data %>%
     select(q1_27:q1_33) %>% 
-    mutate_all(f) %>% 
+    mutate_all(replace_chars) %>% 
     summarize_all(sum) %>%
     set_names(c("twitter", "facebook", "linkedin", "pinterest", "instagram", "reddit", "blogs")),
   

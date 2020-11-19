@@ -27,9 +27,9 @@ prep_how_sm_to_plot <- function(d) {
   d1 <- d %>% 
     dplyr::select(recipient_email, time_point, q21_1_1:q21_1_7) %>% 
     purrr::set_names(c("email", "time",
-                "Posting", "Sharing", "Replying", 
-                "Bookmarking", "Searching", "Subscribing", 
-                "Messaging")) %>% 
+                       "Posting", "Sharing", "Replying", 
+                       "Bookmarking", "Searching", "Subscribing", 
+                       "Messaging")) %>% 
     mutate(platform = "twitter")
   
   d2 <- d %>% 
@@ -80,7 +80,6 @@ prep_how_sm_to_plot <- function(d) {
   to_plot_split
   
 }
-
 
 plot_subset_of_teachers_how <- function(data_to_plot) {
   
@@ -134,14 +133,80 @@ plot_all_teachers_how <- function(data_to_plot) {
     theme(plot.caption = element_text(size=12, hjust = .5))
   
   ggsave(here("img", "all-teachers-how.png"), width = 12, height = 12)
-
+  
 }
 
-f <- function(x) {
+replace_chars <- function(x) {
   ifelse(is.na(x), 0, 1)
 }
 
-# > orig_key$Q19_1_1
+calc_total_responses <- function(questions, d, n) {
+  vec <- c(((questions - 1) * n):(questions * n))
+  dd <- select(d, all_of(vec))
+  
+  dd %>% 
+    mutate_all(replace_chars) %>% 
+    summarize_all(sum)
+    # gather(key, val) %>%
+    # summarize(sum_n = sum(val))
+}
+
+all_data %>% 
+  select(q19_1_1:q19_7_9) %>% 
+  gather(key, val) %>% 
+  separate(key, into = c("question", "platform", "item")) %>% 
+  mutate(val = replace_chars(val))
+
+summarize_responses_why <- function(all_data) {
+  
+  d <- select(all_data, contains("q19_"))
+  
+  out_vec <- 1:9 %>% 
+    map(calc_total_responses, d, n = 9) %>% 
+    unlist()
+  
+  out_label <- c(orig_key$Q19_1_1, orig_key$Q19_1_2,
+                 orig_key$Q19_1_3, orig_key$Q19_1_4,
+                 orig_key$Q19_1_5, orig_key$Q19_1_6,
+                 orig_key$Q19_1_7, orig_key$Q19_1_8,
+                 orig_key$Q19_1_9) %>% 
+    str_sub(start = 82) %>% 
+    tools::toTitleCase()
+  
+  res <- tibble(out_vec, out_label) %>% 
+    mutate(var = str_c("Q19_1_", 1:9)) %>% 
+    select(var, label = out_label, n = out_vec)
+  
+  res
+  
+}
+
+summarize_responses_how <- function(all_data) {
+  
+  d <- select(all_data, contains("q21_"))
+  
+  out_vec <- 1:7 %>% 
+    map(calc_total_responses, d, n = 7) %>% 
+    unlist()
+  
+  out_label <- c(orig_key$Q21_1_1, orig_key$Q21_1_2,
+                 orig_key$Q21_1_3, orig_key$Q21_1_4,
+                 orig_key$Q21_1_5, orig_key$Q21_1_6,
+                 orig_key$Q21_1_7) %>% 
+    str_sub(start = 87) %>% 
+    tools::toTitleCase()
+  
+  res <- tibble(out_vec, out_label) %>% 
+    mutate(var = str_c("Q21_1_", 1:7)) %>% 
+    select(var, label = out_label, n = out_vec)
+  
+  res
+  
+}
+
+summarize_responses_why(all_data)
+summarize_responses_how(all_data)
+
 # finding material for class" 30 RESOURCES or LEARN
 # > orig_key$Q19_1_2
 # sharing my materials" 186 *** SHARE
@@ -156,21 +221,14 @@ f <- function(x) {
 # > orig_key$Q19_1_7
 # seeking emotional support" 181 *** CONNECT
 # > orig_key$Q19_1_8
-# following or engaging with specific organizations (e.g., NCTM)" 0 
+# following or engaging with specific organizations (e.g., NCTM)" 0 - FOLLOWING
 # > orig_key$Q19_1_9
-# following or engaging with specific websites (e.g., Teachers Pay Teachers)" 9
-# 
-# orig_data %>% 
-#   select(q19_9_1:q19_9_9) %>% 
-#   mutate_all(f) %>% 
-#   summarize_all(sum) %>% 
-#   gather(key, val) %>% 
-#   summarize(sum_n = sum(val))
+# following or engaging with specific websites (e.g., Teachers Pay Teachers)" 9 - FOLLOWING
 
 prep_why_sm_to_plot <- function(d) {
   
   d1 <- d %>% 
-    dplyr::select(recipient_email, time_point, q19_1_1:q19_1_7) %>% 
+    dplyr::select(recipient_email, time_point, q19_1_1:q19_1_9) %>% 
     purrr::set_names(c("email", "time",
                        "Posting", "Sharing", "Replying", 
                        "Bookmarking", "Searching", "Subscribing", 
@@ -201,7 +259,15 @@ prep_why_sm_to_plot <- function(d) {
                 "Messaging")) %>% 
     mutate(platform = "instagram")
   
-  to_plot <- bind_rows(d1, d2, d3, d4) %>% 
+  d5 <- d %>% 
+    select(recipient_email, time_point, q21_7_1:q21_7_7) %>% 
+    set_names(c("email", "time",
+                "Posting", "Sharing", "Replying", 
+                "Bookmarking", "Searching", "Subscribing", 
+                "Messaging")) %>% 
+    mutate(platform = "instagram")
+  
+  to_plot <- bind_rows(d1, d2, d3, d4, d5) %>% 
     mutate_at(vars(Posting:Messaging), my_func) %>% 
     gather(key, val, -email, -time, -platform) %>%
     mutate(platform = as.factor(platform),
