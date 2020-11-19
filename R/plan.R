@@ -177,8 +177,7 @@ plan = drake_plan(
                   purposes_m = model_outputp,
                   actions_m = model_output,
                   stress_m = model_outputs
-                  ),
-    trigger = trigger(condition = TRUE)),
+                  )),
   
   rendered_site = target(
     command = rmarkdown::render_site("docs"),
