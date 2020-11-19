@@ -135,7 +135,7 @@ replace_chars <- function(x) {
   ifelse(is.na(x), 0, 1)
 }
 
-prep_data_for_modeling <- function(d, n) {
+prep_data_for_modeling <- function(all_data, n) {
 
   all_data %>% 
     select(recipient_email, survey_period, contains("q21")) %>% 
@@ -145,27 +145,6 @@ prep_data_for_modeling <- function(d, n) {
     rowwise() %>% 
     mutate(s = sum(c_across(3:11))) %>% 
     select(recipient_email, survey_period, s)
-}
-
-calc_total_responses <- function(questions, d, n) {
-  vec <- c(((questions - 1) * n):(questions * n))
-  dd <- select(d, all_of(vec))
-  
-  dd %>% 
-    mutate_all(replace_chars) %>% 
-    summarize_all(sum)
-  # gather(key, val) %>%
-  # summarize(sum_n = sum(val))
-}
-
-calc_total_responses_sum <- function(d, questions, n) {
-  vec <- c(((questions - 1) * n):(questions * n))
-  dd <- select(d, all_of(vec))
-  
-  dd %>% 
-    mutate_all(replace_chars) %>% 
-    rowwise() %>% 
-    mutate(m = mean(c_across(1:9)))
 }
 
 prep_why_sm_to_plot <- function(d) {

@@ -1,7 +1,7 @@
 # This is where you write your drake plan.
 # Details: https://books.ropensci.org/drake/plans.html
 
-plan <- drake_plan(
+plan = drake_plan(
   
   # original data 
   
@@ -81,16 +81,25 @@ plan <- drake_plan(
   why_subset_of_teachers_plot = plot_subset_of_teachers_why(why_data_to_plot),
   why_all_teachers_plot = plot_all_teachers_why(why_data_to_plot),
   
-  # modeling how
+  # modeling platform
   
-  m1 <- glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 1), family = "poisson"),
-  m2 <- glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 2), family = "poisson"),
-  m3 <- glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 3), family = "poisson"),
-  m4 <- glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 4), family = "poisson"),
-  m5 <- glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 5), family = "poisson"),
-  m6 <- glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 6), family = "poisson"),
-  m7 <- glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 7), family = "poisson"),
-  # orig_key$Q12
-  # orig_data %>% count(q1_35_text)
+  m1 = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 1), family = "poisson"),
+  m2 = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 2), family = "poisson"),
+  m3 = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 3), family = "poisson"),
+  m4 = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 4), family = "poisson"),
+  m5 = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 5), family = "poisson"),
+  m6 = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 6), family = "poisson"),
+  m7 = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 7), family = "poisson"),
+  
+  model_list = list(m1, m2, m3, m4, m5, m6, m7),
+  
+  model_output = model_list %>%
+    map(broom.mixed::tidy) %>% 
+    map(~ filter(., term == "survey_periodorig")) %>% 
+    map_df(~.) %>% 
+    mutate(effect = c("Twitter", "Facebook", "LinkedIn",
+                      "Pinterest", "Instagram", "Reddit", "Blogs")) %>% 
+    select(-group)
+  
 )
 
