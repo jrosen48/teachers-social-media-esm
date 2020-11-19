@@ -33,7 +33,9 @@ stress_m <- params$stress_m
 ```{r}
 response_df %>% 
   mutate(prop = n/14) %>% 
-  select(everything(), n, prop)
+  mutate_if(is.double, round, 3) %>% 
+  select(everything(), n, prop) %>% 
+  knitr::kable()
 ```
 
 # RQ 1
@@ -44,6 +46,7 @@ response_df %>%
 
 ```{r}
 purposes %>% 
+  mutate_if(is.double, round, 3) %>% 
   knitr::kable()
 ```
 
@@ -57,6 +60,7 @@ knitr::include_graphics(here("img", "all-teachers-how.png"))
 
 ```{r}
 actions %>% 
+  mutate_if(is.double, round, 3) %>% 
   knitr::kable()
 ```
 
@@ -72,6 +76,7 @@ knitr::include_graphics(here("img", "all-teachers-why.png"))
 
 ```{r}
 purposes_m %>% 
+  mutate_if(is.double, round, 3) %>% 
   knitr::kable()
 ```
 
@@ -79,6 +84,7 @@ purposes_m %>%
 
 ```{r}
 actions_m %>% 
+  mutate_if(is.double, round, 3) %>% 
   knitr::kable()
 ```
 
@@ -88,5 +94,6 @@ actions_m %>%
 
 ```{r}
 stress_m %>% 
+  mutate_if(is.double, round, 3) %>% 
   knitr::kable()
 ```

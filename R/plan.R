@@ -44,8 +44,8 @@ plan = drake_plan(
     mutate(platform = c("Twitter", "Facebook", "LinkedIn",
                         "Pinterest", "Instagram", "Reddit", "Blogs", "Other")),
   
-  how_tab_tot = how_tab %>% rbind(c("Total", as.vector(colSums(how_tab[, 2:8])))),
-  how_tab_prop = how_tab %>% mutate_if(is_double, ~ ./(nrow(all_data))),
+  how_tab_tot = how_tab %>% rbind(c("Total", as.vector(colSums(how_tab[, 2:10])))),
+  how_tab_prop = how_tab_tot %>% mutate_at(vars(2:10), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
   
   # how
   how_data_to_plot = prep_how_sm_to_plot(all_data),
@@ -72,7 +72,7 @@ plan = drake_plan(
   
   why_tab_tot = why_tab %>% rbind(c("Total", as.vector(colSums(why_tab[, 2:8])))),
   
-  why_tab_prop = why_tab %>% mutate_if(is_double, ~ ./(nrow(all_data))),
+  why_tab_prop = why_tab %>% mutate_at(2:8, as.double) %>% mutate_if(is_double, ~ ./(nrow(all_data))),
   
   # why 
   why_data_to_plot = prep_why_sm_to_plot(all_data),
@@ -177,7 +177,8 @@ plan = drake_plan(
                   purposes_m = model_outputp,
                   actions_m = model_output,
                   stress_m = model_outputs
-                  )),
+                  ),
+    trigger = trigger(condition = TRUE)),
   
   rendered_site = target(
     command = rmarkdown::render_site("docs"),
