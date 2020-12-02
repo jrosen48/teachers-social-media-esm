@@ -52,33 +52,6 @@ plan = drake_plan(
   how_subset_of_teachers_plot = plot_subset_of_teachers_how(how_data_to_plot),
   how_all_teachers_plot = plot_all_teachers_how(how_data_to_plot),
   
-  # ACTUALLY, THIS IS HOW - need to switch these
-  # why sm use - descriptives
-  # 21 has 7
-  why_df = all_data %>% 
-    select(q21_1_1:q21_9_7) %>% 
-    gather(key, val) %>% 
-    separate(key, into = c("question", "platform", "item")) %>% 
-    mutate(val = replace_chars(val)),
-  
-  why_tab = why_df %>% 
-    filter(val == 1) %>% 
-    select(-val) %>% 
-    count(platform, item) %>% 
-    spread(item, n, fill = 0) %>% # wow, no "nones" for why
-    set_names(c("platform", c("creating posts or pages", "sharing or reposting others' posts", "replying to others' posts", "bookmarking or saving posts or pages", "searching (through a search bar or function)", "subscribed to or followed a person, page, or resource", "contacted a page or other user privately"))) %>% 
-    mutate(platform = c("Twitter", "Facebook", "LinkedIn",
-                        "Pinterest", "Instagram", "Reddit", "Blogs", "Other")),
-  
-  why_tab_tot = why_tab %>% rbind(c("Total", as.vector(colSums(why_tab[, 2:8])))),
-  
-  why_tab_prop = why_tab %>% mutate_at(2:8, as.double) %>% mutate_if(is_double, ~ ./(nrow(all_data))),
-  
-  # why 
-  why_data_to_plot = prep_why_sm_to_plot(all_data),
-  why_subset_of_teachers_plot = plot_subset_of_teachers_why(why_data_to_plot),
-  why_all_teachers_plot = plot_all_teachers_why(why_data_to_plot),
-  
   # modeling features
   # 21 has 7 features of SM
   m1 = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 21, 1), family = "poisson"),
@@ -100,30 +73,6 @@ plan = drake_plan(
     mutate(icc = model_list %>% map(performance::icc) %>% map_dbl(~.$ICC_conditional),
            warning = c(rep(F, 6), T)),
   
-  # modeling goals
-  # 19 has 9 goals
-  
-  m1p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 1), family = "poisson"),
-  m2p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 2), family = "poisson"),
-  m3p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 3), family = "poisson"),
-  m4p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 4), family = "poisson"),
-  m5p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 5), family = "poisson"),
-  m6p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 6), family = "poisson"),
-  m7p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 7), family = "poisson"),
-  m8p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 8), family = "poisson"),
-  m9p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 9), family = "poisson"),
-  
-  model_listp = list(m1p, m2p, m3p, m4p, m5p, m6p, m7p, m8p, m9p),
-  
-  model_outputp = model_listp %>%
-    map(broom.mixed::tidy) %>% 
-    map(~ filter(., term == "survey_periodorig")) %>% 
-    map_df(~.) %>% 
-    mutate(effect = c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)")) %>% 
-    select(-group) %>% 
-    mutate(icc = model_listp %>% map(performance::icc) %>% map_dbl(~.$ICC_conditional),
-           warning = c(rep(F, 9))),
-    
   # stress
   
   stress_data = list.files(here("data-raw", "covid"), full.names = T) %>% 
