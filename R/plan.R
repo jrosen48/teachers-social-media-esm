@@ -122,9 +122,7 @@ plan = drake_plan(
     output_file = file_out("docs/output.html"),
     params = list(overall_time_point_df = overall_time_point_df,
                   purposes = how_tab_prop,
-                  actions = why_tab_prop,
                   purposes_m = model_outputp,
-                  actions_m = model_output,
                   stress_m = model_outputs
                   )),
   

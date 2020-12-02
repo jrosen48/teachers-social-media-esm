@@ -19,10 +19,8 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, cache = FALSE)
 
 response_df <- params$overall_time_point_df
 purposes <- params$purposes
-actions <- params$actions
 
 purposes_m <- params$purposes_m
-actions_m <- params$actions_m
 stress_m <- params$stress_m
 ```
 
@@ -56,34 +54,12 @@ purposes %>%
 knitr::include_graphics(here("img", "all-teachers-how.png"))
 ```
 
-### Actions
-
-```{r}
-actions %>% 
-  mutate_if(is.double, round, 3) %>% 
-  knitr::kable()
-```
-
-### Actions figures
-
-```{r}
-knitr::include_graphics(here("img", "all-teachers-why.png"))
-```
-
 # RQ 2
 
 ## Purposes Models
 
 ```{r}
 purposes_m %>% 
-  mutate_if(is.double, round, 3) %>% 
-  knitr::kable()
-```
-
-## Actions Models
-
-```{r}
-actions_m %>% 
   mutate_if(is.double, round, 3) %>% 
   knitr::kable()
 ```
