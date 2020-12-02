@@ -67,15 +67,16 @@ purposes_m %>%
 
 # RQ 3
 
+## Looking at the data 
+
 ```{r}
 stress_data %>% 
-  set_names(c("recipient_email", "time_point", 
+  dplyr::select(-recipient_email) %>% 
+  set_names(c("time_point", 
               "parenting", "family", "friendships", "mental health", "physical health", "covid - self", "covid - family", "covid - community",
               "videoconference - work", "videoconference - children", "hardware", "lms", "email", "social media",
               "survey_period")) %>% 
-  filter(!is.na(recipient_email)) %>% 
-  mutate_at(3:16, my_func) %>% 
-  mutate_at(3:16, replace_na, 0) %>% 
+  mutate_at(2:15, as.double) %>% 
   skimr::skim()
 ```
 
@@ -84,19 +85,5 @@ stress_data %>%
 ```{r}
 stress_m %>% 
   mutate_if(is.double, round, 3) %>% 
-  knitr::kable()
-```
-
-# Appendix
-
-## Stress descriptives
-
-```{r}
-stress_data %>% 
-  select(-recipient_email) %>% 
-  set_names(c("time_point", 
-              "parenting", "family", "friendships", "mental health", "physical health", "covid - self", "covid - family", "covid - community",
-              "videoconference - work", "videoconference - children", "hardware", "lms", "email", "social media",
-              "survey_period")) %>% 
   knitr::kable()
 ```
