@@ -24,13 +24,26 @@ plan = drake_plan(
     mutate(overall_time_point = 1:nrow(.)),
   
   # combining data
-  all_data = bind_rows(orig_data, new_data) %>% 
+  all_data_raw = bind_rows(orig_data, new_data) %>% 
     filter(!is.na(recipient_email)),
+  
+  # grouping together purposes
+  all_data = all_data_raw %>% 
+    mutate(q19_1_1 = q19_1_1,
+           q19_1_2 = ifelse(q19_1_2 == "1" | q19_1_3 == "1", 1, 0),
+           q19_1_3 = ifelse(q19_1_4 == "1" | q19_1_5 == "1", 1, 0),
+           q19_1_4 = ifelse(q19_1_6 == "1" | q19_1_7 == "1", 1, 0),
+           q19_1_5 = ifelse(q19_1_8 == "1" | q19_1_9 == "1", 1, 0)) %>% 
+    select(-q19_1_6,-q19_1_7,-q19_1_8,-q19_1_9),
   
   # how sm use - descriptives
   # 19 has nine goals
   how_df = all_data %>% 
-    select(q19_1_1:q19_9_9) %>% 
+    select(q19_1_1:q19_1_5,
+           q19_2_1:q19_2_5,
+           q19_4_1:q19_4_5,
+           q19_5_1:q19_5_5,
+           q19_7_1:q19_7_5) %>% 
     gather(key, val) %>% 
     separate(key, into = c("question", "platform", "item")) %>% 
     mutate(val = replace_chars(val)),
@@ -40,12 +53,12 @@ plan = drake_plan(
     select(-val) %>% 
     count(platform, item) %>% 
     spread(item, n, fill = 0) %>% 
-    set_names(c("platform", c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)"))) %>% 
-    mutate(platform = c("Twitter", "Facebook", "LinkedIn",
-                        "Pinterest", "Instagram", "Reddit", "Blogs", "Other")),
+    set_names(c("platform", c("finding", "sharing", "learning", "connecting", "following"))) %>% 
+    mutate(platform = c("Twitter", "Facebook", 
+                        "Pinterest", "Instagram", "Blogs")),
   
-  how_tab_tot = how_tab %>% rbind(c("Total", as.vector(colSums(how_tab[, 2:10])))),
-  how_tab_prop = how_tab_tot %>% mutate_at(vars(2:10), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
+  how_tab_tot = how_tab %>% rbind(c("Total", as.vector(colSums(how_tab[, 2:6])))),
+  how_tab_prop = how_tab_tot %>% mutate_at(vars(2:6), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
   
   # how
   how_data_to_plot = prep_how_sm_to_plot(all_data),
@@ -55,83 +68,87 @@ plan = drake_plan(
   # modeling goals
   # 19 has 9 goals
   
-  m1p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 1), family = "poisson"),
-  m2p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 2), family = "poisson"),
-  m3p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 3), family = "poisson"),
-  m4p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 4), family = "poisson"),
-  m5p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 5), family = "poisson"),
-  m6p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 6), family = "poisson"),
-  m7p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 7), family = "poisson"),
-  m8p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 8), family = "poisson"),
-  m9p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 9), family = "poisson"),
+  m1p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 1), family = "binomial"),
+  m2p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 2), family = "binomial"),
+  m3p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 3), family = "binomial"),
+  m4p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 4), family = "binomial"),
+  m5p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 5), family = "binomial"),
   
-  model_listp = list(m1p, m2p, m3p, m4p, m5p, m6p, m7p, m8p, m9p),
+  # sanity check
+  sanity_check = prep_data_for_modeling(all_data, 3) %>% 
+    group_by(survey_period) %>% 
+    summarize(ssum = sum(s)/n()),
+  
+  model_listp = list(m1p, m2p, m3p, m4p, m5p),
   
   model_outputp = model_listp %>%
     map(broom.mixed::tidy) %>% 
     map(~ filter(., term == "survey_periodorig")) %>% 
     map_df(~.) %>% 
-    mutate(effect = c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)")) %>% 
+    mutate(effect = c("finding", "sharing", "learning", "connecting", "following")) %>% 
     select(-group) %>% 
     mutate(icc = model_listp %>% map(performance::icc) %>% map_dbl(~.$ICC_conditional),
-           warning = c(rep(F, 9))),
-    
+           ame = model_listp %>% map(margins::margins) %>% map(summary) %>% map(pluck(2)) %>% unlist(),
+           warning = c(rep(F, 5)),
+           irr = exp(estimate)) %>% 
+    select(effect, term, estimate, irr, ame, icc, everything()),
+  
   # stress
   
   stress_data = list.files(here("data-raw", "covid"), full.names = T) %>% 
     map_df(read_and_slice) %>% 
-    select(recipient_email, time_point, contains("q24")) %>% 
+    select(recipient_email, time_point, contains("q24"), contains("q25")) %>% 
     mutate(survey_period = "covid"),
   
-  stress_data_processed = stress_data %>% 
-    mutate_at(vars(q24_1:q24_10), replace_na, 0) %>% 
-    mutate_at(vars(q24_1:q24_10), as.integer) %>% 
-    rowwise() %>% 
-    mutate(stress_var = sum(c_across(q24_1:q24_10))) %>% 
-    mutate(m = stress_var/10) %>% 
-    select(recipient_email, time_point, survey_period, stress_var, m) %>% 
-    filter(!is.na(recipient_email)),
-  
-  stress_data_joined_all = all_data %>% 
-    mutate(row_num = 1:nrow(.)) %>% 
-    left_join(stress_data_processed) %>% 
-    filter(!is.na(recipient_email)),
-  
-  m1s = glmer(s ~ m + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 1, stress_data_processed), family = "poisson"),
-  m2s = glmer(s ~ m + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 2, stress_data_processed), family = "poisson"),
-  m3s = glmer(s ~ m + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 3, stress_data_processed), family = "poisson"),
-  m4s = glmer(s ~ m + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 4, stress_data_processed), family = "poisson"),
-  m5s = glmer(s ~ m + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 5, stress_data_processed), family = "poisson"),
-  m6s = glmer(s ~ m + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 6, stress_data_processed), family = "poisson"),
-  m7s = glmer(s ~ m + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 7, stress_data_processed), family = "poisson"),
-  m8s = glmer(s ~ m + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 8, stress_data_processed), family = "poisson"),
-  m9s = glmer(s ~ m + (1|recipient_email), data = prep_data_for_modeling(all_data, 19, 9, stress_data_processed), family = "poisson"),
-  
-  model_lists = list(m1s, m2s, m3s, m4s, m5s, m6s, m7s, m8s, m9s),
-  
-  model_outputs = model_lists %>%
-    map(broom.mixed::tidy) %>% 
-    map(~ filter(., term == "m")) %>% 
-    map_df(~.) %>% 
-    mutate(effect = c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)")) %>% 
-    select(-group) %>% 
-    mutate(icc = model_lists %>% map(performance::icc) %>% map_dbl(~.$ICC_conditional),
-           warning = c(rep(F, 9))),
-  
-  # output
-  
-  output = rmarkdown::render(
-    knitr_in("output.Rmd"),
-    output_file = file_out("docs/output.html"),
-    params = list(overall_time_point_df = overall_time_point_df,
-                  purposes = how_tab_prop,
-                  purposes_m = model_outputp,
-                  stress_m = model_outputs
-                  )),
-  
-  rendered_site = target(
-    command = rmarkdown::render_site("docs"),
-    trigger = trigger(condition = TRUE)
-  ),
+stress_data_processed = stress_data %>% 
+  filter(!is.na(recipient_email)) %>% 
+  mutate_at(vars(q24_1:q25_8), as.integer) %>% 
+  rowwise() %>% 
+  #mutate(n_na = sum_na(c_across(q24_1:q25_8))) %>% 
+  #mutate(n_valid = 14-n_na) %>% 
+  mutate(stress_mean = mean(c_across(q24_1:q25_8), na.rm = TRUE)) %>% 
+  select(recipient_email, time_point, survey_period, stress_mean),
+
+stress_data_joined_all = all_data %>% 
+  mutate(row_num = 1:nrow(.)) %>% 
+  left_join(stress_data_processed) %>% 
+  filter(!is.na(recipient_email)),
+
+m1s = glmer(s ~ stress_mean + (1|recipient_email), data = prep_data_for_modeling(all_data, 1, stress_data_processed), family = "binomial"),
+m2s = glmer(s ~ stress_mean + (1|recipient_email), data = prep_data_for_modeling(all_data, 2, stress_data_processed), family = "binomial"),
+m3s = glmer(s ~ stress_mean + (1|recipient_email), data = prep_data_for_modeling(all_data, 3, stress_data_processed), family = "binomial"),
+m4s = glmer(s ~ stress_mean + (1|recipient_email), data = prep_data_for_modeling(all_data, 4, stress_data_processed), family = "binomial"),
+m5s = glmer(s ~ stress_mean + (1|recipient_email), data = prep_data_for_modeling(all_data, 5, stress_data_processed), family = "binomial"),
+
+model_lists = list(m1s, m2s, m3s, m4s, m5s),
+
+model_outputs = model_lists %>%
+  map(broom.mixed::tidy) %>% 
+  map(~ filter(., term == "stress_mean")) %>% 
+  map_df(~.) %>% 
+  mutate(effect = c("finding", "sharing", "learning", "connecting", "following")) %>% 
+  select(-group) %>% 
+  mutate(icc = model_lists %>% map(performance::icc) %>% map_dbl(~.$ICC_conditional),
+         ame = model_lists %>% map(margins::margins) %>% map(summary) %>% map(pluck(2)) %>% unlist(),
+         irr = exp(estimate),
+         warning = c(rep(F, 5))) %>% 
+  select(effect, term, estimate, irr, ame, icc, everything()),
+
+# output
+
+output = rmarkdown::render(
+  knitr_in("output.Rmd"),
+  output_file = file_out("docs/output.html"),
+  params = list(overall_time_point_df = overall_time_point_df,
+                purposes = how_tab_prop,
+                purposes_m = model_outputp,
+                stress_m = model_outputs,
+                stress_data = stress_data
+  )),
+
+rendered_site = target(
+  command = rmarkdown::render_site("docs"),
+  trigger = trigger(condition = TRUE)
+),
 )
 

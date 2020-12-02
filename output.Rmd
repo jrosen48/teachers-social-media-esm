@@ -8,10 +8,9 @@ output:
 params:
    overall_time_point_df: ""
    purposes: ""
-   actions: ""
    purposes_m: ""
-   actions_m: ""
    stress_m: ""
+   stress_data: ""
 ---
 
 ```{r setup, include=FALSE}
@@ -21,6 +20,8 @@ response_df <- params$overall_time_point_df
 purposes <- params$purposes
 
 purposes_m <- params$purposes_m
+
+stress_data <- params$stress_data
 stress_m <- params$stress_m
 ```
 
@@ -66,10 +67,35 @@ purposes_m %>%
 
 # RQ 3
 
+```{r}
+stress_data %>% 
+  set_names(c("recipient_email", "time_point", 
+              "parenting", "family", "friendships", "mental health", "physical health", "covid - self", "covid - family", "covid - community",
+              "videoconference - work", "videoconference - children", "hardware", "lms", "email", "social media",
+              "survey_period")) %>% 
+  filter(!is.na(recipient_email)) %>% 
+  mutate_at(3:16, my_func) %>% 
+  mutate_at(3:16, replace_na, 0) %>% 
+  skimr::skim()
+```
+
 ## Stress Models
 
 ```{r}
 stress_m %>% 
   mutate_if(is.double, round, 3) %>% 
+  knitr::kable()
+```
+
+# Appendix
+
+## Stress descriptives (not run)
+
+```{r, eval - FALSE}
+stress_data %>% 
+  set_names(c("recipient_email", "time_point", 
+              "parenting", "family", "friendships", "mental health", "physical health", "covid - self", "covid - family", "covid - community",
+              "videoconference - work", "videoconference - children", "hardware", "lms", "email", "social media",
+              "survey_period")) %>% 
   knitr::kable()
 ```

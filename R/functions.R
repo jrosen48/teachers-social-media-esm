@@ -25,38 +25,42 @@ my_func <- function(x) {
 prep_how_sm_to_plot <- function(d) {
   
   d1 <- d %>% 
-    dplyr::select(recipient_email, time_point, q19_1_1:q19_1_9) %>% 
+    dplyr::select(recipient_email, time_point, q19_1_1:q19_1_5) %>% 
     set_names(c("recipient_email", "platform",
-                c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)"))) %>% 
-    mutate(platform = "twitter")
+                c("finding", "sharing", "learning", "connecting", "following"))) %>% 
+    mutate(platform = "twitter") %>% 
+    mutate_if(is.double, as.character)
   
   d2 <- d %>% 
-    dplyr::select(recipient_email, time_point, q19_2_1:q19_2_9) %>% 
+    dplyr::select(recipient_email, time_point, q19_2_1:q19_2_5) %>% 
     set_names(c("recipient_email", "platform",
-                c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)"))) %>% 
-    
-    mutate(platform = "facebook")
+                c("finding", "sharing", "learning", "connecting", "following"))) %>% 
+    mutate(platform = "facebook") %>% 
+    mutate_if(is.double, as.character)
   
   d3 <- d %>% 
-    dplyr::select(recipient_email, time_point, q19_4_1:q19_4_9) %>% 
+    dplyr::select(recipient_email, time_point, q19_4_1:q19_4_5) %>% 
     set_names(c("recipient_email", "platform",
-                c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)"))) %>% 
+                c("finding", "sharing", "learning", "connecting", "following"))) %>% 
     
-    mutate(platform = "pinterest")
+    mutate(platform = "pinterest") %>% 
+    mutate_if(is.double, as.character)
   
   d4 <- d %>% 
-    dplyr::select(recipient_email, time_point, q19_5_1:q19_5_9) %>% 
+    dplyr::select(recipient_email, time_point, q19_5_1:q19_5_5) %>% 
     set_names(c("recipient_email", "platform",
-                c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)"))) %>% 
+                c("finding", "sharing", "learning", "connecting", "following"))) %>% 
     
-    mutate(platform = "instagram")
+    mutate(platform = "instagram") %>% 
+    mutate_if(is.double, as.character)
   
   d5 <- d %>% 
-    dplyr::select(recipient_email, time_point, q19_7_1:q19_7_9) %>% 
+    dplyr::select(recipient_email, time_point, q19_7_1:q19_7_5) %>% 
     set_names(c("recipient_email", "platform",
-                c("finding material for class", "sharing my materials", "sharing my experiences", "learning about or reviewing curricular content", "learning about or reviewing teaching strategies", "connecting with other educators", "seeking emotional support", "following or engaging with specific organizations (e.g., NCTM)", "following or engaging with specific websites (e.g., Teachers Pay Teachers)"))) %>% 
+                c("finding", "sharing", "learning", "connecting", "following"))) %>% 
     
-    mutate(platform = "blogs")
+    mutate(platform = "blogs") %>% 
+    mutate_if(is.double, as.character)
   
   to_plot <- bind_rows(d1, d2, d3, d4, d5) %>% 
     mutate_if(is.numeric, my_func) %>% 
@@ -135,16 +139,17 @@ replace_chars <- function(x) {
   ifelse(is.na(x), 0, 1)
 }
 
-prep_data_for_modeling <- function(all_data, q_number, item_n, stress = NULL) {
+prep_data_for_modeling <- function(all_data, item_n, stress = NULL) {
   
   all_data <- all_data %>% 
-    select(recipient_email, survey_period, time_point, contains(str_c("q", q_number))) %>% 
+    select(recipient_email, survey_period, time_point, contains(str_c("q19"))) %>% 
     select(recipient_email, survey_period, time_point, matches(str_c("_", item_n, "$"))) %>% # this grabs the types of responses (how, why)
     select(-matches("_8_"), -matches("_9_")) %>% # this gets rid of none and other
     mutate_at(4:10, my_func) %>% 
     mutate_all(replace_na, 0) %>% 
     rowwise() %>% 
     mutate(s = sum(c_across(4:10))) %>% 
+    mutate(s = ifelse(s >= 1, 1, 0)) %>% 
     select(recipient_email, survey_period, time_point, s)
   
   if (!is.null(stress)) {
