@@ -100,38 +100,39 @@ plan = drake_plan(
     select(recipient_email, time_point, contains("q24"), contains("q25")) %>% 
     mutate(survey_period = "covid"),
   
-stress_data_processed = stress_data %>% 
+stress_data_processed_raw = stress_data %>% 
   filter(!is.na(recipient_email)) %>% 
   mutate_at(vars(q24_1:q25_8), as.integer) %>% 
   rowwise() %>% 
-  #mutate(n_na = sum_na(c_across(q24_1:q25_8))) %>% 
-  #mutate(n_valid = 14-n_na) %>% 
   mutate(stress_mean = mean(c_across(q24_1:q25_8), na.rm = TRUE)) %>% 
   select(recipient_email, time_point, survey_period, stress_mean),
 
-stress_data_joined_all = all_data %>% 
-  mutate(row_num = 1:nrow(.)) %>% 
-  left_join(stress_data_processed) %>% 
-  filter(!is.na(recipient_email)),
+stress_data_processed = stress_data_processed_raw %>% 
+  group_by(recipient_email) %>% 
+  mutate(stress_tri = ifelse(stress_mean < mean(stress_mean, na.rm = TRUE), "low", 
+                             ifelse(stress_mean > mean(stress_mean, na.rm = T), "high", NA))) %>% 
+  mutate(stress_tri = ifelse(is.na(stress_tri), "missing", stress_tri),
+         stress_tri = factor(stress_tri, levels = c("missing", "low", "high"))),
 
-m1s = glmer(s ~ stress_mean + (1|recipient_email), data = prep_data_for_modeling(all_data, 1, stress_data_processed), family = "binomial"),
-m2s = glmer(s ~ stress_mean + (1|recipient_email), data = prep_data_for_modeling(all_data, 2, stress_data_processed), family = "binomial"),
-m3s = glmer(s ~ stress_mean + (1|recipient_email), data = prep_data_for_modeling(all_data, 3, stress_data_processed), family = "binomial"),
-m4s = glmer(s ~ stress_mean + (1|recipient_email), data = prep_data_for_modeling(all_data, 4, stress_data_processed), family = "binomial"),
-m5s = glmer(s ~ stress_mean + (1|recipient_email), data = prep_data_for_modeling(all_data, 5, stress_data_processed), family = "binomial"),
+m1s = glmer(s ~ stress_tri + (1|recipient_email), data = prep_data_for_modeling(all_data, 1, stress_data_processed), family = "binomial"),
+m2s = glmer(s ~ stress_tri + (1|recipient_email), data = prep_data_for_modeling(all_data, 2, stress_data_processed), family = "binomial"),
+m3s = glmer(s ~ stress_tri + (1|recipient_email), data = prep_data_for_modeling(all_data, 3, stress_data_processed), family = "binomial"),
+m4s = glmer(s ~ stress_tri + (1|recipient_email), data = prep_data_for_modeling(all_data, 4, stress_data_processed), family = "binomial"),
+m5s = glmer(s ~ stress_tri + (1|recipient_email), data = prep_data_for_modeling(all_data, 5, stress_data_processed), family = "binomial"),
 
 model_lists = list(m1s, m2s, m3s, m4s, m5s),
 
 model_outputs = model_lists %>%
   map(broom.mixed::tidy) %>% 
-  map(~ filter(., term == "stress_mean")) %>% 
+  map(~ filter(., term == "stress_trilow" | term == "stress_trihigh")) %>% 
   map_df(~.) %>% 
-  mutate(effect = c("finding", "sharing", "learning", "connecting", "following")) %>% 
+  mutate(effect = rep(c("finding", "sharing", "learning", "connecting", "following"), each= 2)) %>% 
   select(-group) %>% 
-  mutate(icc = model_lists %>% map(performance::icc) %>% map_dbl(~.$ICC_conditional),
+  mutate(icc = rep(model_lists %>% map(performance::icc) %>% map_dbl(~.$ICC_conditional), 2),
          ame = model_lists %>% map(margins::margins) %>% map(summary) %>% map(pluck(2)) %>% unlist(),
+         ame = ame[c(2, 1, 4, 3, 6, 5, 8, 7, 10,9)],
          irr = exp(estimate),
-         warning = c(rep(F, 5))) %>% 
+         warning = c(rep(F, 10))) %>% 
   select(effect, term, estimate, irr, ame, icc, everything()),
 
 # output

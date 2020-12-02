@@ -89,11 +89,12 @@ stress_m %>%
 
 # Appendix
 
-## Stress descriptives (not run)
+## Stress descriptives
 
-```{r, eval - FALSE}
+```{r}
 stress_data %>% 
-  set_names(c("recipient_email", "time_point", 
+  select(-recipient_email) %>% 
+  set_names(c("time_point", 
               "parenting", "family", "friendships", "mental health", "physical health", "covid - self", "covid - family", "covid - community",
               "videoconference - work", "videoconference - children", "hardware", "lms", "email", "social media",
               "survey_period")) %>% 
