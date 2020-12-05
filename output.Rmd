@@ -92,22 +92,11 @@ purposes_m %>%
 
 ```{r, eval = TRUE}
 stress_data %>% 
-  dplyr::select(-recipient_email) %>% 
-  set_names(c("time_point", 
-              "parenting", "family", "friendships", "mental health", "physical health", "covid - self", "covid - family", "covid - community",
-              "videoconference - work", "videoconference - children", "hardware", "lms", "email", "social media",
-              "survey_period")) %>% 
-  mutate_at(2:15, as.double) %>% 
-  skimr::skim()
+  dplyr::select(-recipient_email, -time_point, -survey_period) %>% 
+  psych::describe()
 
 stress_data %>% 
-  dplyr::select(-recipient_email) %>% 
-  set_names(c("time_point", 
-              "parenting", "family", "friendships", "mental health", "physical health", "covid - self", "covid - family", "covid - community",
-              "videoconference - work", "videoconference - children", "hardware", "lms", "email", "social media",
-              "survey_period")) %>% 
-  mutate_at(2:15, as.double) %>% 
-  select(-time_point, -survey_period) %>% 
+  dplyr::select(-recipient_email, -time_point, -survey_period) %>% 
   corrr::correlate() %>% 
   corrr::fashion()
 ```

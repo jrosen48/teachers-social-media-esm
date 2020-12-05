@@ -261,7 +261,7 @@ plan = drake_plan(
                   purposes_c = how_tab_propc,
                   purposes_m = model_outputp,
                   stress_m = model_outputs,
-                  stress_data = stress_data
+                  stress_data = stress_data_processed_raw
     )),
   
   rendered_site = target(
