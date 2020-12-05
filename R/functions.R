@@ -144,12 +144,13 @@ prep_data_for_modeling <- function(all_data, item_n, stress = NULL) {
   all_data <- all_data %>% 
     select(recipient_email, survey_period, time_point, contains(str_c("q19"))) %>% 
     select(recipient_email, survey_period, time_point, matches(str_c("_", item_n, "$"))) %>% # this grabs the types of responses (how, why)
-    select(-matches("_8_"), -matches("_9_")) %>% # this gets rid of none and other
-    mutate_at(4:10, my_func) %>% 
+    #select(-match9-matches("_8_"), -matches("_9_")) %>% # this gets rid of none and other
+    mutate_at(4:8, my_func) %>% 
     mutate_all(replace_na, 0) %>% 
     rowwise() %>% 
-    mutate(s = sum(c_across(4:10))) %>% 
+    mutate(s = sum(c_across(4:8))) %>% 
     mutate(s = ifelse(s >= 1, 1, 0)) %>% 
+    mutate(time_point = as.double(time_point)) %>% 
     select(recipient_email, survey_period, time_point, s)
   
   if (!is.null(stress)) {

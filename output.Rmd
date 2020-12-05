@@ -11,6 +11,8 @@ params:
    purposes_m: ""
    stress_m: ""
    stress_data: ""
+   purposes_o: ""
+   purposes_c: ""
 ---
 
 ```{r setup, include=FALSE}
@@ -18,6 +20,9 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, cache = FALSE)
 
 response_df <- params$overall_time_point_df
 purposes <- params$purposes
+
+purposes_o <- params$purposes_o
+purposes_c <- params$purposes_c
 
 purposes_m <- params$purposes_m
 
@@ -41,10 +46,26 @@ response_df %>%
 
 ## Descriptives
 
-### Purposes
+### Purposes - overall
 
 ```{r}
 purposes %>% 
+  mutate_if(is.double, round, 3) %>% 
+  knitr::kable()
+```
+
+### Purposes - orig
+
+```{r}
+purposes_o %>% 
+  mutate_if(is.double, round, 3) %>% 
+  knitr::kable()
+```
+
+### Purposes - covid
+
+```{r}
+purposes_c %>% 
   mutate_if(is.double, round, 3) %>% 
   knitr::kable()
 ```
@@ -69,7 +90,7 @@ purposes_m %>%
 
 ## Looking at the data 
 
-```{r}
+```{r, eval = TRUE}
 stress_data %>% 
   dplyr::select(-recipient_email) %>% 
   set_names(c("time_point", 
@@ -78,11 +99,22 @@ stress_data %>%
               "survey_period")) %>% 
   mutate_at(2:15, as.double) %>% 
   skimr::skim()
+
+stress_data %>% 
+  dplyr::select(-recipient_email) %>% 
+  set_names(c("time_point", 
+              "parenting", "family", "friendships", "mental health", "physical health", "covid - self", "covid - family", "covid - community",
+              "videoconference - work", "videoconference - children", "hardware", "lms", "email", "social media",
+              "survey_period")) %>% 
+  mutate_at(2:15, as.double) %>% 
+  select(-time_point, -survey_period) %>% 
+  corrr::correlate() %>% 
+  corrr::fashion()
 ```
 
 ## Stress Models
 
-```{r}
+```{r, eval = TRUE}
 stress_m %>% 
   mutate_if(is.double, round, 3) %>% 
   knitr::kable()

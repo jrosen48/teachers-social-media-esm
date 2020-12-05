@@ -34,7 +34,31 @@ plan = drake_plan(
            q19_1_3 = ifelse(q19_1_4 == "1" | q19_1_5 == "1", 1, 0),
            q19_1_4 = ifelse(q19_1_6 == "1" | q19_1_7 == "1", 1, 0),
            q19_1_5 = ifelse(q19_1_8 == "1" | q19_1_9 == "1", 1, 0)) %>% 
-    select(-q19_1_6,-q19_1_7,-q19_1_8,-q19_1_9),
+    select(-q19_1_6,-q19_1_7,-q19_1_8,-q19_1_9) %>% 
+    mutate(q19_2_1 = q19_2_1,
+           q19_2_2 = ifelse(q19_2_2 == "1" | q19_2_3 == "1", 1, 0),
+           q19_2_3 = ifelse(q19_2_4 == "1" | q19_2_5 == "1", 1, 0),
+           q19_2_4 = ifelse(q19_2_6 == "1" | q19_2_7 == "1", 1, 0),
+           q19_2_5 = ifelse(q19_2_8 == "1" | q19_2_9 == "1", 1, 0)) %>% 
+    select(-q19_2_6,-q19_2_7,-q19_2_8,-q19_2_9) %>% 
+    mutate(q19_4_1 = q19_4_1,
+           q19_4_2 = ifelse(q19_4_2 == "1" | q19_4_3 == "1", 1, 0),
+           q19_4_3 = ifelse(q19_4_4 == "1" | q19_4_5 == "1", 1, 0),
+           q19_4_4 = ifelse(q19_4_6 == "1" | q19_4_7 == "1", 1, 0),
+           q19_4_5 = ifelse(q19_4_8 == "1" | q19_4_9 == "1", 1, 0)) %>% 
+    select(-q19_4_6,-q19_4_7,-q19_4_8,-q19_4_9) %>% 
+    mutate(q19_5_1 = q19_5_1,
+           q19_5_2 = ifelse(q19_5_2 == "1" | q19_5_3 == "1", 1, 0),
+           q19_5_3 = ifelse(q19_5_4 == "1" | q19_5_5 == "1", 1, 0),
+           q19_5_4 = ifelse(q19_5_6 == "1" | q19_5_7 == "1", 1, 0),
+           q19_5_5 = ifelse(q19_5_8 == "1" | q19_5_9 == "1", 1, 0)) %>% 
+    select(-q19_5_6,-q19_5_7,-q19_5_8,-q19_5_9) %>% 
+    mutate(q19_7_1 = q19_7_1,
+           q19_7_2 = ifelse(q19_7_2 == "1" | q19_7_3 == "1", 1, 0),
+           q19_7_3 = ifelse(q19_7_4 == "1" | q19_7_5 == "1", 1, 0),
+           q19_7_4 = ifelse(q19_7_6 == "1" | q19_7_7 == "1", 1, 0),
+           q19_7_5 = ifelse(q19_7_8 == "1" | q19_7_9 == "1", 1, 0)) %>% 
+    select(-q19_7_6,-q19_7_7,-q19_7_8,-q19_7_9),
   
   # how sm use - descriptives
   # 19 has nine goals
@@ -65,6 +89,54 @@ plan = drake_plan(
   how_subset_of_teachers_plot = plot_subset_of_teachers_how(how_data_to_plot),
   how_all_teachers_plot = plot_all_teachers_how(how_data_to_plot),
   
+  # JUST FOR ORIG
+  how_dfo = all_data %>% 
+    filter(survey_period == "orig") %>% 
+    select(q19_1_1:q19_1_5,
+           q19_2_1:q19_2_5,
+           q19_4_1:q19_4_5,
+           q19_5_1:q19_5_5,
+           q19_7_1:q19_7_5) %>% 
+    gather(key, val) %>% 
+    separate(key, into = c("question", "platform", "item")) %>% 
+    mutate(val = replace_chars(val)),
+  
+  how_tabo = how_dfo %>% 
+    filter(val == 1) %>% # also no nones!
+    select(-val) %>% 
+    count(platform, item) %>% 
+    spread(item, n, fill = 0) %>% 
+    set_names(c("platform", c("finding", "sharing", "learning", "connecting", "following"))) %>% 
+    mutate(platform = c("Twitter", "Facebook", 
+                        "Pinterest", "Instagram", "Blogs")),
+  
+  how_tab_toto = how_tabo %>% rbind(c("Total", as.vector(colSums(how_tabo[, 2:6])))),
+  how_tab_propo = how_tab_toto %>% mutate_at(vars(2:6), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
+  
+  # JUST FOR COVID
+  how_dfc = all_data %>% 
+    filter(survey_period == "covid") %>% 
+    select(q19_1_1:q19_1_5,
+           q19_2_1:q19_2_5,
+           q19_4_1:q19_4_5,
+           q19_5_1:q19_5_5,
+           q19_7_1:q19_7_5) %>% 
+    gather(key, val) %>% 
+    separate(key, into = c("question", "platform", "item")) %>% 
+    mutate(val = replace_chars(val)),
+  
+  how_tabc = how_dfc %>% 
+    filter(val == 1) %>% # also no nones!
+    select(-val) %>% 
+    count(platform, item) %>% 
+    spread(item, n, fill = 0) %>% 
+    set_names(c("platform", c("finding", "sharing", "learning", "connecting", "following"))) %>% 
+    mutate(platform = c("Twitter", "Facebook", 
+                        "Pinterest", "Instagram", "Blogs")),
+  
+  how_tab_totc = how_tabc %>% rbind(c("Total", as.vector(colSums(how_tabc[, 2:6])))),
+  how_tab_propc = how_tab_totc %>% mutate_at(vars(2:6), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
+
   # modeling goals
   # 19 has 9 goals
   
@@ -100,40 +172,83 @@ plan = drake_plan(
     select(recipient_email, time_point, contains("q24"), contains("q25")) %>% 
     mutate(survey_period = "covid"),
   
-  stress_data_processed_raw = stress_data %>% 
+  stress_data_processed_odd_numbers = stress_data %>% 
     filter(!is.na(recipient_email)) %>% 
     mutate_at(vars(q24_1:q25_8), as.integer) %>% 
     rowwise() %>% 
-    mutate(stress_mean = mean(c_across(q24_1:q25_8), na.rm = TRUE)) %>% 
-    select(recipient_email, time_point, survey_period, stress_mean),
+    mutate(relationships_mean = mean(c_across(q24_1:q24_5), na.rm = TRUE),
+           health_mean = mean(c_across(q24_6:q24_7), na.rm = TRUE),
+           covid_mean = mean(c_across(q24_8:q24_10), na.rm = TRUE),
+           tech_mean = mean(c_across(q25_1:q25_8), na.rm = TRUE),
+           all_mean = mean(c_across(q24_1:q25_8), na.rm = TRUE)) %>% 
+    select(recipient_email, time_point, survey_period, contains("_mean")) %>% 
+    mutate(time_point = as.integer(time_point)) %>% 
+    filter(time_point %in% seq(1, 22, by = 2)),
   
-  stress_data_processed = stress_data_processed_raw %>% 
-    group_by(recipient_email) %>% 
-    mutate(stress_tri = ifelse(stress_mean < mean(stress_mean, na.rm = TRUE), "low", 
-                               ifelse(stress_mean > mean(stress_mean, na.rm = T), "high", NA))) %>% 
-    mutate(stress_tri = ifelse(is.na(stress_tri), "missing", stress_tri),
-           stress_tri = factor(stress_tri, levels = c("missing", "low", "high"))),
+  stress_data_processed_even_numbers = stress_data_processed_odd_numbers %>% 
+    mutate(time_point = time_point - 1) %>% 
+    filter(time_point > 0),
   
-  m1s = glmer(s ~ stress_tri + (1|recipient_email), data = prep_data_for_modeling(all_data, 1, stress_data_processed), family = "binomial"),
-  m2s = glmer(s ~ stress_tri + (1|recipient_email), data = prep_data_for_modeling(all_data, 2, stress_data_processed), family = "binomial"),
-  m3s = glmer(s ~ stress_tri + (1|recipient_email), data = prep_data_for_modeling(all_data, 3, stress_data_processed), family = "binomial"),
-  m4s = glmer(s ~ stress_tri + (1|recipient_email), data = prep_data_for_modeling(all_data, 4, stress_data_processed), family = "binomial"),
-  m5s = glmer(s ~ stress_tri + (1|recipient_email), data = prep_data_for_modeling(all_data, 5, stress_data_processed), family = "binomial"),
+  stress_data_processed_raw = bind_rows(stress_data_processed_odd_numbers, 
+                                        stress_data_processed_even_numbers) %>% 
+    arrange(time_point),
   
-  model_lists = list(m1s, m2s, m3s, m4s, m5s),
+  all_data_tm = mutate(all_data, time_point = as.double(time_point)),
   
-  model_outputs = model_lists %>%
-    map(broom.mixed::tidy) %>% 
-    map(~ filter(., term == "stress_trilow" | term == "stress_trihigh")) %>% 
-    map_df(~.) %>% 
-    mutate(effect = rep(c("finding", "sharing", "learning", "connecting", "following"), each= 2)) %>% 
-    select(-group) %>% 
-    mutate(icc = rep(model_lists %>% map(performance::icc) %>% map_dbl(~.$ICC_conditional), 2),
-           ame = model_lists %>% map(margins::margins) %>% map(summary) %>% map(pluck(2)) %>% unlist(),
-           ame = ame[c(2, 1, 4, 3, 6, 5, 8, 7, 10,9)],
+  m1so = glmer(s ~ all_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 1, stress_data_processed_raw), family = "binomial"),
+  m2so = glmer(s ~ all_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 2, stress_data_processed_raw), family = "binomial"),
+  m3so = glmer(s ~ all_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 3, stress_data_processed_raw), family = "binomial"),
+  m4so = glmer(s ~ all_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 4, stress_data_processed_raw), family = "binomial"),
+  m5so = glmer(s ~ all_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 5, stress_data_processed_raw), family = "binomial"),
+  
+  model_lists_overall = list(m1so, m2so, m3so, m4so, m5so),
+  
+  m1s = glmer(s ~ relationships_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 1, stress_data_processed_raw), family = "binomial"),
+  m2s = glmer(s ~ relationships_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 2, stress_data_processed_raw), family = "binomial"),
+  m3s = glmer(s ~ relationships_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 3, stress_data_processed_raw), family = "binomial"),
+  m4s = glmer(s ~ relationships_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 4, stress_data_processed_raw), family = "binomial"),
+  m5s = glmer(s ~ relationships_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 5, stress_data_processed_raw), family = "binomial"),
+  
+  model_lists_relationships = list(m1s, m2s, m3s, m4s, m5s),
+  
+  m1s1 = glmer(s ~ health_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 1, stress_data_processed_raw), family = "binomial"),
+  m2s1 = glmer(s ~ health_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 2, stress_data_processed_raw), family = "binomial"),
+  m3s1 = glmer(s ~ health_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 3, stress_data_processed_raw), family = "binomial"),
+  m4s1 = glmer(s ~ health_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 4, stress_data_processed_raw), family = "binomial"),
+  m5s1 = glmer(s ~ health_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 5, stress_data_processed_raw), family = "binomial"),
+  
+  model_lists_health = list(m1s1, m2s1, m3s1, m4s1, m5s1),
+  
+  m1s2 = glmer(s ~ covid_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 1, stress_data_processed_raw), family = "binomial"),
+  m2s2 = glmer(s ~ covid_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 2, stress_data_processed_raw), family = "binomial"),
+  m3s2 = glmer(s ~ covid_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 3, stress_data_processed_raw), family = "binomial"),
+  m4s2 = glmer(s ~ covid_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 4, stress_data_processed_raw), family = "binomial"),
+  m5s2 = glmer(s ~ covid_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 5, stress_data_processed_raw), family = "binomial"),
+  
+  model_lists_covid = list(m1s2, m2s2, m3s2, m4s2, m5s2),
+  
+  m1s3 = glmer(s ~ tech_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 1, stress_data_processed_raw), family = "binomial"),
+  m2s3 = glmer(s ~ tech_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 2, stress_data_processed_raw), family = "binomial"),
+  m3s3 = glmer(s ~ tech_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 3, stress_data_processed_raw), family = "binomial"),
+  m4s3 = glmer(s ~ tech_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 4, stress_data_processed_raw), family = "binomial"),
+  m5s3 = glmer(s ~ tech_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 5, stress_data_processed_raw), family = "binomial"),
+  
+  model_lists_tech = list(m1s3, m2s3, m3s3, m4s3, m5s3),
+  
+  combined_lists = list(model_lists_overall, model_lists_relationships, model_lists_health, model_lists_covid, model_lists_tech) %>% unlist(),
+  
+  model_outputs = combined_lists %>%
+    map(broom.mixed::tidy) %>%
+    map(~ filter(., str_detect(term, "_mean"))) %>%
+    map_df(~.) %>%
+    mutate(effect = rep(c("finding", "sharing", "learning", "connecting", "following"), 5)) %>%
+    select(-group) %>%
+    mutate(icc = combined_lists %>% map(performance::icc) %>% map_dbl(~.$ICC_conditional),
+           ame = combined_lists %>% map(margins::margins) %>% map(summary) %>% map(pluck(2)) %>% unlist(),
            irr = exp(estimate),
-           warning = c(rep(F, 10))) %>% 
-    select(effect, term, estimate, irr, ame, icc, everything()),
+           warning = c(rep(F, 25))) %>%
+    select(effect, term, estimate, irr, ame, icc, everything()) %>% 
+    arrange(term),
   
   # output
   
@@ -142,6 +257,8 @@ plan = drake_plan(
     output_file = file_out("docs/output.html"),
     params = list(overall_time_point_df = overall_time_point_df,
                   purposes = how_tab_prop,
+                  purposes_o = how_tab_propo,
+                  purposes_c = how_tab_propc,
                   purposes_m = model_outputp,
                   stress_m = model_outputs,
                   stress_data = stress_data
@@ -152,4 +269,3 @@ plan = drake_plan(
     trigger = trigger(condition = TRUE)
   ),
 )
-
