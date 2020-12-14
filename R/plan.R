@@ -28,7 +28,7 @@ plan = drake_plan(
     filter(!is.na(recipient_email)),
   
   # grouping together purposes
-  all_data = all_data_raw %>% 
+  all_data_tmp_proc = all_data_raw %>% 
     mutate(q19_1_1 = q19_1_1,
            q19_1_2 = ifelse(q19_1_2 == "1" | q19_1_3 == "1", 1, 0),
            q19_1_3 = ifelse(q19_1_4 == "1" | q19_1_5 == "1", 1, 0),
@@ -59,6 +59,9 @@ plan = drake_plan(
            q19_7_4 = ifelse(q19_7_6 == "1" | q19_7_7 == "1", 1, 0),
            q19_7_5 = ifelse(q19_7_8 == "1" | q19_7_9 == "1", 1, 0)) %>% 
     select(-q19_7_6,-q19_7_7,-q19_7_8,-q19_7_9),
+  
+  # changing reference level 
+  all_data = mutate(all_data_tmp_proc, survey_period = factor(survey_period, levels = c("orig", "covid"))),
   
   # how sm use - descriptives
   # 19 has nine goals
@@ -136,7 +139,7 @@ plan = drake_plan(
   
   how_tab_totc = how_tabc %>% rbind(c("Total", as.vector(colSums(how_tabc[, 2:6])))),
   how_tab_propc = how_tab_totc %>% mutate_at(vars(2:6), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
-
+  
   # modeling goals
   # 19 has 9 goals
   
@@ -155,7 +158,7 @@ plan = drake_plan(
   
   model_outputp = model_listp %>%
     map(broom.mixed::tidy) %>% 
-    map(~ filter(., term == "survey_periodorig")) %>% 
+    map(~ filter(., term == "survey_periodcovid")) %>% 
     map_df(~.) %>% 
     mutate(effect = c("finding", "sharing", "learning", "connecting", "following")) %>% 
     select(-group) %>% 
@@ -180,8 +183,11 @@ plan = drake_plan(
            health_mean = mean(c_across(q24_6:q24_7), na.rm = TRUE),
            covid_mean = mean(c_across(q24_8:q24_10), na.rm = TRUE),
            tech_mean = mean(c_across(q25_1:q25_8), na.rm = TRUE),
-           all_mean = mean(c_across(q24_1:q25_8), na.rm = TRUE)) %>% 
-    select(recipient_email, time_point, survey_period, contains("_mean")) %>% 
+           all_mean = mean(c_across(q24_1:q25_8), na.rm = TRUE),
+           covid_self = q24_8,
+           covid_fam = q24_9,
+           covid_com = q24_10) %>% 
+    select(recipient_email, time_point, survey_period, contains("_mean"), covid_self, covid_fam, covid_com) %>% 
     mutate(time_point = as.integer(time_point)) %>% 
     filter(time_point %in% seq(1, 22, by = 2)),
   
@@ -235,18 +241,43 @@ plan = drake_plan(
   
   model_lists_tech = list(m1s3, m2s3, m3s3, m4s3, m5s3),
   
-  combined_lists = list(model_lists_overall, model_lists_relationships, model_lists_health, model_lists_covid, model_lists_tech) %>% unlist(),
+  mcov_self1 = glmer(s ~ covid_self + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 1, stress_data_processed_raw), family = "binomial"),
+  mcov_self2 = glmer(s ~ covid_self + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 2, stress_data_processed_raw), family = "binomial"),
+  mcov_self3 = glmer(s ~ covid_self + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 3, stress_data_processed_raw), family = "binomial"),
+  mcov_self4 = glmer(s ~ covid_self + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 4, stress_data_processed_raw), family = "binomial"),
+  mcov_self5 = glmer(s ~ covid_self + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 5, stress_data_processed_raw), family = "binomial"),
+  
+  model_lists_self = list(mcov_self1, mcov_self2, mcov_self3, mcov_self4, mcov_self5),
+  
+  mcov_fam1 = glmer(s ~ covid_fam + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 1, stress_data_processed_raw), family = "binomial"),
+  mcov_fam2 = glmer(s ~ covid_fam + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 2, stress_data_processed_raw), family = "binomial"),
+  mcov_fam3 = glmer(s ~ covid_fam + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 3, stress_data_processed_raw), family = "binomial"),
+  mcov_fam4 = glmer(s ~ covid_fam + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 4, stress_data_processed_raw), family = "binomial"),
+  mcov_fam5 = glmer(s ~ covid_fam + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 5, stress_data_processed_raw), family = "binomial"),
+  
+  model_lists_fam = list(mcov_fam1, mcov_fam2, mcov_fam3, mcov_fam4, mcov_fam5),
+  
+  mcov_com1 = glmer(s ~ covid_com + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 1, stress_data_processed_raw), family = "binomial"),
+  mcov_com2 = glmer(s ~ covid_com + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 2, stress_data_processed_raw), family = "binomial"),
+  mcov_com3 = glmer(s ~ covid_com + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 3, stress_data_processed_raw), family = "binomial"),
+  mcov_com4 = glmer(s ~ covid_com + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 4, stress_data_processed_raw), family = "binomial"),
+  mcov_com5 = glmer(s ~ covid_com + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 5, stress_data_processed_raw), family = "binomial"),
+  
+  model_lists_com = list(mcov_com1, mcov_com2, mcov_com3, mcov_com4, mcov_com5),
+  
+  combined_lists = list(model_lists_overall, model_lists_relationships, model_lists_health, model_lists_covid, model_lists_tech, 
+                        model_lists_self, model_lists_fam, model_lists_com) %>% unlist(),
   
   model_outputs = combined_lists %>%
     map(broom.mixed::tidy) %>%
-    map(~ filter(., str_detect(term, "_mean"))) %>%
+    map(~ filter(., str_detect(term, "_mean") | str_detect(term, "covid_"))) %>%
     map_df(~.) %>%
-    mutate(effect = rep(c("finding", "sharing", "learning", "connecting", "following"), 5)) %>%
+    mutate(effect = rep(c("finding", "sharing", "learning", "connecting", "following"), 8)) %>%
     select(-group) %>%
     mutate(icc = combined_lists %>% map(performance::icc) %>% map_dbl(~.$ICC_conditional),
            ame = combined_lists %>% map(margins::margins) %>% map(summary) %>% map(pluck(2)) %>% unlist(),
            irr = exp(estimate),
-           warning = c(rep(F, 25))) %>%
+           warning = c(rep(F, 40))) %>%
     select(effect, term, estimate, irr, ame, icc, everything()) %>% 
     arrange(term),
   

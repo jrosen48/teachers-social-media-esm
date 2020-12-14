@@ -103,8 +103,20 @@ stress_data %>%
 
 ## Stress Models
 
+### COVID sources of stress
+
 ```{r, eval = TRUE}
 stress_m %>% 
   mutate_if(is.double, round, 3) %>% 
+  filter(str_detect(term, "covid")) %>% 
+  knitr::kable()
+```
+
+### Other sources of stress
+
+```{r}
+stress_m %>% 
+  mutate_if(is.double, round, 3) %>% 
+  filter(!str_detect(term, "covid")) %>% 
   knitr::kable()
 ```

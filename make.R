@@ -10,6 +10,7 @@ source("R/plan.R")      # Create your drake plan.
 # Call make() to run your work.
 # Your targets will be stored in a hidden .drake/ cache,
 make(plan)
+drake::plot_graph(plan)
 
 # If you do not change any code or data,
 # subsequent make()'s do not build targets.
