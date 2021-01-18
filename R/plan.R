@@ -17,6 +17,30 @@ plan = drake_plan(
     select(recipient_email, time_point, q1_27:q1_33, q19_1_1:q19_9_9, q21_1_1:q21_9_7) %>% 
     mutate(survey_period = "covid"),
   
+  # for data analysis descriptives
+  
+  orig_data_desc = list.files(here("data-raw", "orig", "processed"), full.names = T) %>% 
+    map_df(read_and_label) %>% 
+    clean_names() %>% 
+    select(start_date, end_date, recorded_date, duration_in_seconds, recorded_date) %>%
+    mutate(survey_period = "orig"),
+  
+  # covid data
+  
+  new_data_desc = list.files(here("data-raw", "covid"), full.names = T) %>% # five emails are NA
+    map_df(read_and_slice) %>% 
+    select(start_date, end_date, recorded_date, duration_in_seconds, recorded_date) %>% 
+    mutate(survey_period = "covid") %>% 
+    mutate(duration_in_seconds = as.double(duration_in_seconds)),
+  
+  data_for_descriptive_stats = bind_rows(orig_data_desc, new_data_desc),
+  
+  time_to_complete = data_for_descriptive_stats %>% summarize(mean_dur = median(duration_in_seconds)) %>% mutate(mean_dur = mean_dur/60),
+  time_to_complete_mean = data_for_descriptive_stats %>% summarize(mean_dur = mean(duration_in_seconds)) %>% mutate(mean_dur = mean_dur/60),
+  
+  time_to_complete_hist = data_for_descriptive_stats %>% ggplot(aes(x = duration_in_seconds/60)) + geom_histogram(),
+  time_to_complete_lim = data_for_descriptive_stats %>% ggplot(aes(x = duration_in_seconds/60)) + geom_histogram() +xlim(0, 30),
+  
   # timing
   overall_time_point_df = all_data %>% 
     count(time_point, survey_period) %>% 
@@ -284,7 +308,7 @@ plan = drake_plan(
   # output
   
   output = rmarkdown::render(
-    knitr_in("output.Rmd"),
+    knitr_in(file_in("output.Rmd")),
     output_file = file_out("docs/output.html"),
     params = list(overall_time_point_df = overall_time_point_df,
                   purposes = how_tab_prop,
@@ -299,4 +323,9 @@ plan = drake_plan(
     command = rmarkdown::render_site("docs"),
     trigger = trigger(condition = TRUE)
   ),
+  
+  demographics = rmarkdown::render(
+    knitr_in(file_in("demographics.rmd")),
+    output_file = file_out("docs/demographics.html")
+  )
 )

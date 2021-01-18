@@ -8,6 +8,8 @@ library(here)
 library(janitor)
 library(conflicted)
 library(lme4)
+library(performance)
+library(broom.mixed)
 
 conflict_prefer("gather", "tidyr")
 conflict_prefer("filter", "dplyr")

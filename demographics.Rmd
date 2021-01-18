@@ -1,0 +1,101 @@
+---
+title: "demographics"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(here)
+
+d <- read_csv(here("data-raw", "demographics", "Demo.csv"), skip = 1)
+d <- janitor::clean_names(d)
+d <- slice(d, 2:nrow(d))
+```
+
+grade
+
+```{r}
+d %>% 
+  select(contains("grade")) %>% 
+  mutate_all(replace_na, 0) %>% 
+  mutate_all(as.integer) %>% 
+  summarize_all(list(sum)) %>% 
+  gather(key, val) %>% 
+  separate(key, into = c("key-back", "key"), "teach_") %>% 
+  select(key, val) %>% 
+  mutate(prop = round(val/14, 3))
+```
+
+teaching experience
+
+```{r}
+d %>% 
+  mutate(in_what_year_of_teaching_are_you_years = as.integer(in_what_year_of_teaching_are_you_years)) %>% 
+  skimr::skim(in_what_year_of_teaching_are_you_years)
+```
+
+age
+
+```{r}
+d %>% 
+  mutate(how_old_are_you_years_old = as.integer(how_old_are_you_years_old)) %>% 
+  skimr::skim(how_old_are_you_years_old)
+```
+
+services used
+
+```{r}
+services_freq <- d %>% 
+  select(contains("what_social_media_platforms_do_you_use")) %>% 
+  select(1:8) %>% 
+  mutate_all(replace_na, 0) %>% 
+  mutate_all(as.integer) %>% 
+  summarize_all(list(sum)) %>% 
+  gather(key, val) %>% 
+  separate(key, into = c("key-back", "key"), "choice_") %>% 
+  select(key, val) %>% 
+  mutate(prop = round(val/14, 3)) %>% 
+  arrange(desc(val))
+
+services_sum_mean <- d %>% 
+  select(contains("when_you_visit")) %>% 
+  select(1:8) %>% 
+  mutate_all(replace_na, 0) %>% 
+  mutate_all(as.integer) %>% 
+  summarize_all(list(mean)) %>% 
+  gather(key, val) %>% 
+  separate(key, into = c("key-back", "key"), "visit_") %>% 
+  mutate(key = str_split(key, "_about")) %>% 
+  mutate(key = key %>% map_chr(~.[[1]])) %>% 
+  select(key, val) %>% 
+  arrange(desc(val)) %>% 
+  rename(mean = val) %>% 
+  mutate(key = ifelse(key == "qid3_choice_text_entry_value_42", "other", key))
+
+services_sum_sd <- d %>% 
+  select(contains("when_you_visit")) %>% 
+  select(1:8) %>% 
+  mutate_all(replace_na, 0) %>% 
+  mutate_all(as.integer) %>% 
+  summarize_all(list(sd)) %>% 
+  gather(key, val) %>% 
+  separate(key, into = c("key-back", "key"), "visit_") %>% 
+  mutate(key = str_split(key, "_about")) %>% 
+  mutate(key = key %>% map_chr(~.[[1]])) %>% 
+  select(key, val) %>% 
+  arrange(desc(val)) %>% 
+  rename(sd = val) %>% 
+  mutate(key = ifelse(key == "qid3_choice_text_entry_value_42", "other", key))
+
+services_freq %>% 
+  left_join(services_sum_mean) %>% 
+  left_join(services_sum_sd) %>% 
+  mutate_if(is.double, round, 3) %>% 
+  mutate(n = str_c(val, " (", prop, ")")) %>% 
+  mutate(M = str_c(mean, " (SD = ", sd, ")")) %>% 
+  select(key, n, M)
+```

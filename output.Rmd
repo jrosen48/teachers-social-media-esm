@@ -34,12 +34,47 @@ stress_m <- params$stress_m
 
 ## Response Rate
 
+overall
+
 ```{r}
 response_df %>% 
   mutate(prop = n/14) %>% 
+  mutate(possible_n = 14) %>% 
+  summarize(sum_n = sum(n),
+            sum_possible_n = sum(possible_n))
+```
+
+overall rate
+
+```{r}
+response_df %>% 
+  mutate(prop = n/14) %>% 
+  mutate(possible_n = 14) %>% 
+  summarize(sum_n = sum(n),
+            sum_possible_n = sum(possible_n)) %>% 
+  summarize(pct = sum_n/sum_possible_n)
+```
+
+over time
+
+```{r}
+response_df %>% 
+  mutate(prop = n/14) %>% 
+  mutate(possible_n = 14) %>% 
   mutate_if(is.double, round, 3) %>% 
   select(everything(), n, prop) %>% 
   knitr::kable()
+```
+
+over time mean
+
+```{r}
+response_df %>% 
+  mutate(prop = n/14) %>% 
+  mutate(possible_n = 14) %>% 
+  mutate_if(is.double, round, 3) %>% 
+  select(everything(), n, prop) %>% 
+  summarize(mean_prop = mean(prop))
 ```
 
 # RQ 1
