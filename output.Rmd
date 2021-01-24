@@ -13,6 +13,8 @@ params:
    stress_data: ""
    purposes_o: ""
    purposes_c: ""
+   model_listp: ""
+   combined_lists: ""
 ---
 
 ```{r setup, include=FALSE}
@@ -28,6 +30,9 @@ purposes_m <- params$purposes_m
 
 stress_data <- params$stress_data
 stress_m <- params$stress_m
+
+model_listp = params$model_listp
+combined_lists = params$combined_lists
 ```
 
 # Descriptives
@@ -115,6 +120,11 @@ knitr::include_graphics(here("img", "all-teachers-how.png"))
 
 ## Purposes Models
 
+```{r, eval = FALSE}
+model_listp[[1]] %>% 
+  equatiomatic::extract_eq()
+```
+
 ```{r}
 purposes_m %>% 
   mutate_if(is.double, round, 3) %>% 
@@ -140,7 +150,12 @@ stress_data %>%
 
 ### COVID sources of stress
 
-```{r, eval = TRUE}
+```{r, eval = FALSE}
+combined_lists[[1]] %>% 
+  equatiomatic::extract_eq()
+```
+
+```{r}
 stress_m %>% 
   mutate_if(is.double, round, 3) %>% 
   filter(str_detect(term, "covid")) %>% 

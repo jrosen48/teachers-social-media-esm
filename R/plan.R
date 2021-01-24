@@ -316,7 +316,9 @@ plan = drake_plan(
                   purposes_c = how_tab_propc,
                   purposes_m = model_outputp,
                   stress_m = model_outputs,
-                  stress_data = stress_data_processed_raw
+                  stress_data = stress_data_processed_raw,
+                  model_listp = model_listp,
+                  combined_lists = combined_lists
     )),
   
   rendered_site = target(
