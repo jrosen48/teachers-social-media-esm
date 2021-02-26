@@ -65,6 +65,12 @@ plan = drake_plan(
            q19_2_4 = ifelse(q19_2_6 == "1" | q19_2_7 == "1", 1, 0),
            q19_2_5 = ifelse(q19_2_8 == "1" | q19_2_9 == "1", 1, 0)) %>% 
     select(-q19_2_6,-q19_2_7,-q19_2_8,-q19_2_9) %>% 
+    mutate(q19_3_1 = q19_3_1,
+           q19_3_2 = ifelse(q19_3_2 == "1" | q19_3_3 == "1", 1, 0),
+           q19_3_3 = ifelse(q19_3_4 == "1" | q19_3_5 == "1", 1, 0),
+           q19_3_4 = ifelse(q19_3_6 == "1" | q19_3_7 == "1", 1, 0),
+           q19_3_5 = ifelse(q19_3_8 == "1" | q19_3_9 == "1", 1, 0)) %>% 
+    select(-q19_3_6,-q19_3_7,-q19_3_8,-q19_3_9) %>% 
     mutate(q19_4_1 = q19_4_1,
            q19_4_2 = ifelse(q19_4_2 == "1" | q19_4_3 == "1", 1, 0),
            q19_4_3 = ifelse(q19_4_4 == "1" | q19_4_5 == "1", 1, 0),
@@ -77,6 +83,12 @@ plan = drake_plan(
            q19_5_4 = ifelse(q19_5_6 == "1" | q19_5_7 == "1", 1, 0),
            q19_5_5 = ifelse(q19_5_8 == "1" | q19_5_9 == "1", 1, 0)) %>% 
     select(-q19_5_6,-q19_5_7,-q19_5_8,-q19_5_9) %>% 
+    mutate(q19_6_1 = q19_6_1,
+           q19_6_2 = ifelse(q19_6_2 == "1" | q19_6_3 == "1", 1, 0),
+           q19_6_3 = ifelse(q19_6_4 == "1" | q19_6_5 == "1", 1, 0),
+           q19_6_4 = ifelse(q19_6_6 == "1" | q19_6_7 == "1", 1, 0),
+           q19_6_5 = ifelse(q19_6_8 == "1" | q19_6_9 == "1", 1, 0)) %>% 
+    select(-q19_6_6,-q19_6_7,-q19_6_8,-q19_6_9) %>% 
     mutate(q19_7_1 = q19_7_1,
            q19_7_2 = ifelse(q19_7_2 == "1" | q19_7_3 == "1", 1, 0),
            q19_7_3 = ifelse(q19_7_4 == "1" | q19_7_5 == "1", 1, 0),
@@ -92,8 +104,10 @@ plan = drake_plan(
   how_df = all_data %>% 
     select(q19_1_1:q19_1_5,
            q19_2_1:q19_2_5,
+           q19_3_1:q19_3_5,
            q19_4_1:q19_4_5,
            q19_5_1:q19_5_5,
+           q19_6_1:q19_6_5,
            q19_7_1:q19_7_5) %>% 
     gather(key, val) %>% 
     separate(key, into = c("question", "platform", "item")) %>% 
@@ -104,8 +118,10 @@ plan = drake_plan(
            time_point,
            q19_1_1:q19_1_5,
            q19_2_1:q19_2_5,
+           q19_3_1:q19_3_5,
            q19_4_1:q19_4_5,
            q19_5_1:q19_5_5,
+           q19_6_1:q19_6_5,
            q19_7_1:q19_7_5) %>% 
     gather(key, val, -recipient_email, -time_point) %>% 
     separate(key, into = c("question", "platform", "item")) %>% 
@@ -121,11 +137,10 @@ plan = drake_plan(
     count(platform, item) %>% 
     spread(item, n, fill = 0) %>% 
     set_names(c("platform", c("finding", "sharing", "learning", "connecting", "following"))) %>% 
-    mutate(platform = c("Twitter", "Facebook", 
-                        "Pinterest", "Instagram", "Blogs")),
+    mutate(platform = c("Twitter", "Facebook", "LinkedIn", "Pinterest", "Instagram", "Reddit", "Blogs")),
   
-  how_tab_tot = how_tab %>% rbind(c("Total", as.vector(colSums(how_tab[, 2:6])))),
-  how_tab_prop = how_tab_tot %>% mutate_at(vars(2:6), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
+  #how_tab_tot = how_tab %>% rbind(c("Total", as.vector(colSums(how_tab[, 2:8])))),
+  #how_tab_prop = how_tab_tot %>% mutate_at(vars(2:8), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
   
   # how
   how_data_to_plot = prep_how_sm_to_plot(all_data),
@@ -137,8 +152,10 @@ plan = drake_plan(
     filter(survey_period == "orig") %>% 
     select(q19_1_1:q19_1_5,
            q19_2_1:q19_2_5,
+           q19_3_1:q19_3_5,
            q19_4_1:q19_4_5,
            q19_5_1:q19_5_5,
+           q19_6_1:q19_6_5,
            q19_7_1:q19_7_5) %>% 
     gather(key, val) %>% 
     separate(key, into = c("question", "platform", "item")) %>% 
@@ -150,19 +167,20 @@ plan = drake_plan(
     count(platform, item) %>% 
     spread(item, n, fill = 0) %>% 
     set_names(c("platform", c("finding", "sharing", "learning", "connecting", "following"))) %>% 
-    mutate(platform = c("Twitter", "Facebook", 
-                        "Pinterest", "Instagram", "Blogs")),
+    mutate(platform = c("Twitter", "Facebook", "LinkedIn", "Pinterest", "Instagram", "Blogs")),
   
-  how_tab_toto = how_tabo %>% rbind(c("Total", as.vector(colSums(how_tabo[, 2:6])))),
-  how_tab_propo = how_tab_toto %>% mutate_at(vars(2:6), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
+  #how_tab_toto = how_tabo %>% rbind(c("Total", as.vector(colSums(how_tabo[, 2:7])))),
+  #how_tab_propo = how_tab_toto %>% mutate_at(vars(2:7), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
   
   # JUST FOR COVID
   how_dfc = all_data %>% 
     filter(survey_period == "covid") %>% 
     select(q19_1_1:q19_1_5,
            q19_2_1:q19_2_5,
+           q19_3_1:q19_3_5,
            q19_4_1:q19_4_5,
            q19_5_1:q19_5_5,
+           q19_6_1:q19_6_5,
            q19_7_1:q19_7_5) %>% 
     gather(key, val) %>% 
     separate(key, into = c("question", "platform", "item")) %>% 
@@ -174,11 +192,10 @@ plan = drake_plan(
     count(platform, item) %>% 
     spread(item, n, fill = 0) %>% 
     set_names(c("platform", c("finding", "sharing", "learning", "connecting", "following"))) %>% 
-    mutate(platform = c("Twitter", "Facebook", 
-                        "Pinterest", "Instagram", "Blogs")),
+    mutate(platform = c("Twitter", "Facebook", "LinkedIn", "Pinterest", "Instagram", "Reddit", "Blogs")),
   
-  how_tab_totc = how_tabc %>% rbind(c("Total", as.vector(colSums(how_tabc[, 2:6])))),
-  how_tab_propc = how_tab_totc %>% mutate_at(vars(2:6), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
+  #how_tab_totc = how_tabc %>% rbind(c("Total", as.vector(colSums(how_tabc[, 2:8])))),
+  #how_tab_propc = how_tab_totc %>% mutate_at(vars(2:8), as.double) %>%  mutate_if(is_double, ~ ./(nrow(all_data))),
   
   # modeling goals
   # 19 has 9 goals
@@ -327,9 +344,9 @@ plan = drake_plan(
     knitr_in(file_in("output.Rmd")),
     output_file = file_out("docs/output.html"),
     params = list(overall_time_point_df = overall_time_point_df,
-                  purposes = how_tab_prop,
-                  purposes_o = how_tab_propo,
-                  purposes_c = how_tab_propc,
+                  purposes = how_tab,
+                  purposes_o = how_tabo,
+                  purposes_c = how_tabc,
                   purposes_m = model_outputp,
                   stress_m = model_outputs,
                   stress_data = stress_data_processed_raw,
