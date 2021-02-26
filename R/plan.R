@@ -99,6 +99,22 @@ plan = drake_plan(
     separate(key, into = c("question", "platform", "item")) %>% 
     mutate(val = replace_chars(val)),
   
+  how_df_for_totals = all_data %>% 
+    select(recipient_email,
+           time_point,
+           q19_1_1:q19_1_5,
+           q19_2_1:q19_2_5,
+           q19_4_1:q19_4_5,
+           q19_5_1:q19_5_5,
+           q19_7_1:q19_7_5) %>% 
+    gather(key, val, -recipient_email, -time_point) %>% 
+    separate(key, into = c("question", "platform", "item")) %>% 
+    mutate(val = replace_chars(val)),
+  
+  how_df_platform_total = how_df_for_totals %>% group_by(platform) %>% summarize(mean_val = mean(val)),
+  
+  how_df_purpose_total = how_df_for_totals %>% group_by(item) %>% summarize(mean_val = mean(val)),
+  
   how_tab = how_df %>% 
     filter(val == 1) %>% # also no nones!
     select(-val) %>% 
