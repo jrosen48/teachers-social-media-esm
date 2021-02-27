@@ -144,7 +144,7 @@ plan = drake_plan(
   
   # how
   how_data_to_plot = prep_how_sm_to_plot(all_data),
-  how_subset_of_teachers_plot = plot_subset_of_teachers_how(how_data_to_plot),
+  # how_subset_of_teachers_plot = plot_subset_of_teachers_how(how_data_to_plot),
   how_all_teachers_plot = plot_all_teachers_how(how_data_to_plot),
   
   # JUST FOR ORIG

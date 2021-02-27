@@ -39,6 +39,14 @@ prep_how_sm_to_plot <- function(d) {
     mutate_if(is.double, as.character)
   
   d3 <- d %>% 
+    dplyr::select(recipient_email, time_point, q19_3_1:q19_3_5) %>% 
+    set_names(c("recipient_email", "platform",
+                c("finding", "sharing", "learning", "connecting", "following"))) %>% 
+    
+    mutate(platform = "linkedin") %>% 
+    mutate_if(is.double, as.character)
+  
+  d4 <- d %>% 
     dplyr::select(recipient_email, time_point, q19_4_1:q19_4_5) %>% 
     set_names(c("recipient_email", "platform",
                 c("finding", "sharing", "learning", "connecting", "following"))) %>% 
@@ -46,7 +54,7 @@ prep_how_sm_to_plot <- function(d) {
     mutate(platform = "pinterest") %>% 
     mutate_if(is.double, as.character)
   
-  d4 <- d %>% 
+  d5 <- d %>% 
     dplyr::select(recipient_email, time_point, q19_5_1:q19_5_5) %>% 
     set_names(c("recipient_email", "platform",
                 c("finding", "sharing", "learning", "connecting", "following"))) %>% 
@@ -54,7 +62,14 @@ prep_how_sm_to_plot <- function(d) {
     mutate(platform = "instagram") %>% 
     mutate_if(is.double, as.character)
   
-  d5 <- d %>% 
+  d6 <- d %>% 
+    dplyr::select(recipient_email, time_point, q19_6_1:q19_6_5) %>% 
+    set_names(c("recipient_email", "platform",
+                c("finding", "sharing", "learning", "connecting", "following"))) %>% 
+    mutate(platform = "reddit") %>% 
+    mutate_if(is.double, as.character)
+    
+  d7 <- d %>% 
     dplyr::select(recipient_email, time_point, q19_7_1:q19_7_5) %>% 
     set_names(c("recipient_email", "platform",
                 c("finding", "sharing", "learning", "connecting", "following"))) %>% 
@@ -62,7 +77,7 @@ prep_how_sm_to_plot <- function(d) {
     mutate(platform = "blogs") %>% 
     mutate_if(is.double, as.character)
   
-  to_plot <- bind_rows(d1, d2, d3, d4, d5) %>% 
+  to_plot <- bind_rows(d1, d2, d3, d4, d5, d6, d7) %>% 
     mutate_if(is.numeric, my_func) %>% 
     gather(key, val, -recipient_email, -platform) %>%
     mutate(platform = as.factor(platform),
@@ -117,21 +132,25 @@ plot_all_teachers_how <- function(data_to_plot) {
   data_to_plot %>% 
     ungroup() %>% 
     mutate(email = as.integer(as.factor(email))) %>% 
+    rename(Connecting = connecting, 
+           Finding = finding, 
+           Following = following,
+           Learning = learning, 
+           Sharing = sharing) %>% 
     ggiraphExtra::ggRadar(aes(group = "platform", facet = "email"), use.label = FALSE) +
-    scale_color_discrete(NULL) +
-    scale_fill_discrete(NULL) +
+    scale_color_brewer(NULL, type = "qual") +
+    scale_fill_brewer(NULL, type = "qual") +
     theme_bw() +
     theme(axis.text.y = element_blank(),
           axis.ticks.y = element_blank()) +
     theme(legend.position = "top",
-          text = element_text(size = 9, family = "Times")) +
+          text = element_text(size = 16, family = "Times")) +
     theme(legend.text=element_text(size=14)) +
-    theme(strip.text.x = element_text(size = 14)) +
-    ggtitle("How Teachers Use Social Media") +
+    theme(strip.text.x = element_text(size = 12.5)) +
     theme(plot.title = element_text(size=22, hjust = .5)) +
     theme(plot.caption = element_text(size=12, hjust = .5))
   
-  ggsave(here("img", "all-teachers-how.png"), width = 12, height = 12)
+  ggsave(here("img", "all-teachers-how.png"), width = 17.25, height = 17.5)
   
 }
 
