@@ -132,25 +132,46 @@ plot_all_teachers_how <- function(data_to_plot) {
   data_to_plot %>% 
     ungroup() %>% 
     mutate(email = as.integer(as.factor(email))) %>% 
-    rename(Connecting = connecting, 
-           Finding = finding, 
+    gather(key, val, -email, -platform) %>% 
+    mutate(key = tools::toTitleCase(key)) %>% 
+    # mutate(val = ifelse(val == 0, NA, val)) %>% 
+    ggplot(aes(y = val, color = platform, x = key, group = platform)) +
+    geom_point(size = 2) +
+    #geom_line() +
+    scale_color_brewer("", type = "qual", palette = 2) +
+    theme_minimal() +
+    ylab(NULL) +
+    xlab(NULL) +
+    facet_wrap(~email, ncol = 2) +
+    ylab("Proportion of Time Used") +
+    theme(text = element_text(size = 14)) +
+    theme(legend.position = "top",
+          text = element_text(size = 16))
+  
+   ggsave(here("img", "all-teachers-how-new.png"), width = 9, height = 11)
+  
+   data_to_plot %>% 
+     ungroup() %>% 
+     mutate(email = as.integer(as.factor(email))) %>% 
+    rename(Connecting = connecting,
+           Finding = finding,
            Following = following,
-           Learning = learning, 
-           Sharing = sharing) %>% 
+           Learning = learning,
+           Sharing = sharing) %>%
     ggiraphExtra::ggRadar(aes(group = "platform", facet = "email"), use.label = FALSE) +
-    scale_color_brewer(NULL, type = "qual") +
-    scale_fill_brewer(NULL, type = "qual") +
+    scale_color_brewer(NULL, type = "qual", guide = guide_legend(direction = "horizontal")) +
+    scale_fill_brewer(NULL, type = "qual", guide = guide_legend(direction = "horizontal")) +
     theme_bw() +
     theme(axis.text.y = element_blank(),
           axis.ticks.y = element_blank()) +
     theme(legend.position = "top",
-          text = element_text(size = 16, family = "Times")) +
+          text = element_text(size = 16)) +
     theme(legend.text=element_text(size=14)) +
-    theme(strip.text.x = element_text(size = 12.5)) +
-    theme(plot.title = element_text(size=22, hjust = .5)) +
-    theme(plot.caption = element_text(size=12, hjust = .5))
+    theme(strip.text.x = element_text(size = 10)) +
+    theme(text = element_text(family = "Times")) +
+    theme(panel.spacing = unit(2, "lines"))
   
-  ggsave(here("img", "all-teachers-how.png"), width = 17.25, height = 17.5)
+  ggsave(here("img", "all-teachers-how.png"), width = 18, height = 15)
   
 }
 
