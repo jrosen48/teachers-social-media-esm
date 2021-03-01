@@ -7,5 +7,9 @@ navbar:
     href: index.html
   - text: Output
     href: output.html
+  - text: Demographics
+    href: demographics.html
+  - text: Equations
+    href: equations.html
 output:
   html_document:

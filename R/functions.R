@@ -68,7 +68,7 @@ prep_how_sm_to_plot <- function(d) {
                 c("finding", "sharing", "learning", "connecting", "following"))) %>% 
     mutate(platform = "reddit") %>% 
     mutate_if(is.double, as.character)
-    
+  
   d7 <- d %>% 
     dplyr::select(recipient_email, time_point, q19_7_1:q19_7_5) %>% 
     set_names(c("recipient_email", "platform",
@@ -129,49 +129,146 @@ plot_subset_of_teachers_how <- function(data_to_plot) {
 
 plot_all_teachers_how <- function(data_to_plot) {
   
-  data_to_plot %>% 
+  # library(ggradar)
+  # library(dplyr)
+  # library(scales)
+  # library(tibble)
+  # 
+  # mtcars_radar <- mtcars %>% 
+  #   as_tibble(rownames = "group") %>% 
+  #   mutate_at(vars(-group), rescale) %>% 
+  #   tail(4) %>% 
+  #   select(1:10)
+  # 
+  # mtcars_radar %>% 
+  #   ggradar()
+  
+  order_to_plot <- data_to_plot %>% 
     ungroup() %>% 
-    mutate(email = as.integer(as.factor(email))) %>% 
-    gather(key, val, -email, -platform) %>% 
-    mutate(key = tools::toTitleCase(key)) %>% 
-    # mutate(val = ifelse(val == 0, NA, val)) %>% 
-    ggplot(aes(y = val, color = platform, x = key, group = platform)) +
-    geom_point(size = 2) +
-    #geom_line() +
-    scale_color_brewer("", type = "qual", palette = 2) +
-    theme_minimal() +
-    ylab(NULL) +
-    xlab(NULL) +
-    facet_wrap(~email, ncol = 2) +
-    ylab("Proportion of Time Used") +
-    theme(text = element_text(size = 14)) +
-    theme(legend.position = "top",
-          text = element_text(size = 16))
-  
-   ggsave(here("img", "all-teachers-how-new.png"), width = 9, height = 11)
-  
-   data_to_plot %>% 
-     ungroup() %>% 
-     mutate(email = as.integer(as.factor(email))) %>% 
     rename(Connecting = connecting,
            Finding = finding,
            Following = following,
            Learning = learning,
            Sharing = sharing) %>%
-    ggiraphExtra::ggRadar(aes(group = "platform", facet = "email"), use.label = FALSE) +
-    scale_color_brewer(NULL, type = "qual", guide = guide_legend(direction = "horizontal")) +
-    scale_fill_brewer(NULL, type = "qual", guide = guide_legend(direction = "horizontal")) +
-    theme_bw() +
-    theme(axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    theme(legend.position = "top",
-          text = element_text(size = 16)) +
-    theme(legend.text=element_text(size=14)) +
-    theme(strip.text.x = element_text(size = 10)) +
-    theme(text = element_text(family = "Times")) +
-    theme(panel.spacing = unit(2, "lines"))
+    mutate(email = as.integer(as.factor(email))) %>% 
+    rename(group = platform) %>% 
+    gather(key, val, -email, -group) %>% 
+    group_by(email) %>% 
+    summarize(sum_val = sum(val)) %>% 
+    arrange(desc(sum_val)) %>% 
+    pull(email)
   
-  ggsave(here("img", "all-teachers-how.png"), width = 18, height = 15)
+  # for GIF
+  s <- data_to_plot %>% 
+    ungroup() %>% 
+    rename(Connecting = connecting,
+           Finding = finding,
+           Following = following,
+           Learning = learning,
+           Sharing = sharing) %>%
+    mutate(email = as.integer(as.factor(email))) %>% 
+    rename(group = platform) %>% 
+    group_by(email) %>% 
+    group_split() %>% 
+    purrr::map(~ select(., -email)) %>% 
+    map(ggradar, gridline.mid.colour = "gray",
+        grid.label.size = 7,
+        axis.label.size = 7)
+  
+  for (i in 1:length(s)) {
+    print(s[[i]] + ggtitle("Educator ", i))
+    ggsave(str_c("img/gif/img", i, ".png"), dpi = 150)
+  }
+  
+  ## list file names and read in
+
+  imgs <- list.files("img/gif", full.names = TRUE)
+  img_list <- lapply(imgs, image_read)
+  
+  ## join the images together
+  img_joined <- image_join(img_list)
+  
+  ## animate at 2 frames per second
+  img_animated <- image_animate(img_joined, fps = 2)
+  
+  ## view animated image
+  img_animated
+  
+  ## save to disk
+  image_write(image = img_animated,
+              path = "teachers-sm.gif")
+  
+  # for plot
+  s <- data_to_plot %>% 
+    ungroup() %>% 
+    rename(Connecting = connecting,
+           Finding = finding,
+           Following = following,
+           Learning = learning,
+           Sharing = sharing) %>%
+    mutate(email = as.integer(as.factor(email))) %>% 
+    rename(group = platform) %>% 
+    group_by(email) %>% 
+    group_split() %>% 
+    purrr::map(~ select(., -email)) %>% 
+    map(ggradar, gridline.mid.colour = "gray",
+        grid.label.size = 1,
+        group.point.size = 2.25,
+        group.line.width = .5,
+        axis.label.size = 2.75)
+  
+  ggarrange(s[[7]], s[[9]], s[[2]], 
+            s[[10]], s[[14]], s[[4]], s[[6]], 
+            s[[8]], s[[12]], s[[3]], 
+            s[[5]], s[[1]], s[[13]], 
+            s[[11]],
+            ncol=4, nrow=4, common.legend = TRUE, legend="top")
+  
+  ggsave(here("img", "all-teachers-how-new.png"), width = 10, height = 11)
+  
+  # data_to_plot %>% 
+  #   ungroup() %>% 
+  #   mutate(email = as.integer(as.factor(email))) %>% 
+  #   gather(key, val, -email, -platform) %>% 
+  #   mutate(key = tools::toTitleCase(key)) %>% 
+  #   # mutate(val = ifelse(val == 0, NA, val)) %>% 
+  #   ggplot(aes(y = val, color = platform, x = key, group = platform)) +
+  #   geom_point(size = 2) +
+  #   geom_line() +
+  #   scale_color_brewer("", type = "qual", palette = 2) +
+  #   theme_minimal() +
+  #   ylab(NULL) +
+  #   xlab(NULL) +
+  #   facet_wrap(~email, ncol = 2) +
+  #   ylab("Proportion of Time Used") +
+  #   theme(text = element_text(size = 14)) +
+  #   theme(legend.position = "top",
+  #         text = element_text(size = 16))
+  # 
+  # ggsave(here("img", "all-teachers-how-new.png"), width = 9, height = 11)
+  # 
+  # data_to_plot %>% 
+  #   ungroup() %>% 
+  #   mutate(email = as.integer(as.factor(email))) %>% 
+  #   rename(Connecting = connecting,
+  #          Finding = finding,
+  #          Following = following,
+  #          Learning = learning,
+  #          Sharing = sharing) %>%
+  #   ggiraphExtra::ggRadar(aes(group = "platform", facet = "email"), use.label = FALSE) +
+  #   scale_color_brewer(NULL, type = "qual", guide = guide_legend(direction = "horizontal")) +
+  #   scale_fill_brewer(NULL, type = "qual", guide = guide_legend(direction = "horizontal")) +
+  #   theme_bw() +
+  #   theme(axis.text.y = element_blank(),
+  #         axis.ticks.y = element_blank()) +
+  #   theme(legend.position = "top",
+  #         text = element_text(size = 16)) +
+  #   theme(legend.text=element_text(size=14)) +
+  #   theme(strip.text.x = element_text(size = 10)) +
+  #   theme(text = element_text(family = "Times")) +
+  #   theme(panel.spacing = unit(2, "lines"))
+  # 
+  # ggsave(here("img", "all-teachers-how.png"), width = 18, height = 15)
   
 }
 
@@ -180,14 +277,14 @@ replace_chars <- function(x) {
 }
 
 prep_data_for_modeling <- function(all_data, item_n, stress = NULL) {
-  
+
   all_data <- all_data %>% 
     select(recipient_email, survey_period, time_point, contains(str_c("q19"))) %>% 
     select(recipient_email, survey_period, time_point, matches(str_c("_", item_n, "$"))) %>% # this grabs the types of responses (how, why)
-    mutate_at(4:11, my_func) %>% 
+    mutate_at(4:10, my_func) %>% 
     mutate_all(replace_na, 0) %>% 
     rowwise() %>% 
-    mutate(s = sum(c_across(4:11))) %>% 
+    mutate(s = sum(c_across(4:10))) %>% 
     mutate(s = ifelse(s >= 1, 1, 0)) %>% 
     mutate(time_point = as.double(time_point)) %>% 
     select(recipient_email, survey_period, time_point, s)
@@ -196,11 +293,20 @@ prep_data_for_modeling <- function(all_data, item_n, stress = NULL) {
     all_data <- all_data %>% 
       left_join(stress)
     
+    all_data$covid_mean <- as.vector(scale(all_data$covid_mean))
+    all_data$covid_mean[is.nan(all_data$covid_mean)]<-NA
+    
     return(all_data)
   }
   
   all_data
   
+}
+
+find_covid_mean <- function(data_to_scale) {
+  # data_to_scale$covid_mean_s <- as.vector(scale(data_to_scale$covid_mean))
+  # data_to_scale$covid_mean[is.nan(data_to_scale$covid_mean)]<-NA
+  data_to_scale
 }
 
 prep_why_sm_to_plot <- function(d) {

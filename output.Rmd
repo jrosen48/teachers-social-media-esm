@@ -113,7 +113,7 @@ purposes_c %>%
 ### Purposes figures
 
 ```{r}
-knitr::include_graphics(here("img", "all-teachers-how.png"))
+knitr::include_graphics(here("img", "all-teachers-how-new.png"))
 ```
 
 # RQ 2

@@ -200,6 +200,9 @@ plan = drake_plan(
   # modeling goals
   # 19 has 9 goals
   
+  m0p = glmer(s ~ 1 + (1|recipient_email), data = prep_data_for_modeling(all_data, 1), family = "binomial"),
+  m0p_icc = performance::icc(m0p),
+  
   m1p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 1), family = "binomial"),
   m2p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 2), family = "binomial"),
   m3p = glmer(s ~ survey_period + (1|recipient_email), data = prep_data_for_modeling(all_data, 3), family = "binomial"),
@@ -282,6 +285,12 @@ plan = drake_plan(
   
   model_lists_health = list(m1s1, m2s1, m3s1, m4s1, m5s1),
   
+  # m1s20 = glmer(s ~ 1 + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 1, stress_data_processed_raw) %>% filter(survey_period == "orig"), family = "binomial"),
+  # m1s20_icc = performance::icc(m1s20),
+  
+  data_to_scale = prep_data_for_modeling(all_data_tm, 1, stress_data_processed_raw),
+  covid_mean_data = find_covid_mean(data_to_scale),
+  
   m1s2 = glmer(s ~ covid_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 1, stress_data_processed_raw), family = "binomial"),
   m2s2 = glmer(s ~ covid_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 2, stress_data_processed_raw), family = "binomial"),
   m3s2 = glmer(s ~ covid_mean + (1|recipient_email), data = prep_data_for_modeling(all_data_tm, 3, stress_data_processed_raw), family = "binomial"),
@@ -354,13 +363,16 @@ plan = drake_plan(
                   combined_lists = combined_lists
     )),
   
+  equations = rmarkdown::render(
+    knitr_in(file_in("equations.Rmd")),
+    output_file = file_out("docs/equations.html")),
+  
+  demographics = rmarkdown::render(
+    knitr_in(file_in("demographics.Rmd")),
+    output_file = file_out("docs/demographics.html")),
+  
   rendered_site = target(
     command = rmarkdown::render_site("docs"),
     trigger = trigger(condition = TRUE)
-  ),
-  
-  demographics = rmarkdown::render(
-    knitr_in(file_in("demographics.rmd")),
-    output_file = file_out("docs/demographics.html")
   )
 )

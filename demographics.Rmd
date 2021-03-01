@@ -14,6 +14,14 @@ library(here)
 d <- read_csv(here("data-raw", "demographics", "Demo.csv"), skip = 1)
 d <- janitor::clean_names(d)
 d <- slice(d, 2:nrow(d))
+d <- d %>% rename(email = please_enter_the_best_email_address_to_contact_you_with_further_steps)
+
+dd <- read_csv("data-raw/Early+Elementary+Math+Teacher+Survey_January+26,+2021_20.15.csv", skip = 1)
+dd <- janitor::clean_names(dd)
+dd <- dd %>% rename(email = please_enter_the_best_email_address_to_contact_you_with_further_steps)
+
+dd <- dd %>% 
+  semi_join(d, by = "email")
 ```
 
 grade
@@ -36,6 +44,46 @@ teaching experience
 d %>% 
   mutate(in_what_year_of_teaching_are_you_years = as.integer(in_what_year_of_teaching_are_you_years)) %>% 
   skimr::skim(in_what_year_of_teaching_are_you_years)
+```
+
+race 
+
+```{r}
+dd %>% 
+  janitor::tabyl(what_is_your_race_selected_choice)
+```
+
+```{r}
+dd %>% 
+  janitor::tabyl(what_is_your_gender_selected_choice)
+```
+
+degree
+
+```{r}
+dd %>% 
+  janitor::tabyl(what_is_the_highest_degree_or_level_of_school_you_have_completed_if_currently_enrolled_mark_the_previous_grade_or_highest_degree_received)
+```
+
+lunch
+
+```{r}
+dd %>% 
+  janitor::tabyl(to_your_knowledge_what_percentage_of_your_students_are_on_free_and_reduced_price_lunch)
+```
+
+state
+
+```{r}
+dd %>% 
+  janitor::tabyl(i_teach_in_the_following_state)
+```
+
+ethnicity
+
+```{r}
+dd %>% 
+  janitor::tabyl(are_you_hispanic_or_latino_selected_choice)
 ```
 
 age

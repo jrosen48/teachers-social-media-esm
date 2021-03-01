@@ -1,0 +1,24 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+$$
+\log\left[ \frac { P( \operatorname{Use} = \operatorname{1} ) }{ 1 - P( \operatorname{Use} = \operatorname{1} ) } \right] = \beta_{0} + \beta_{1}(\operatorname{Survey Period}_{\operatorname{COVID}}) + \epsilon_{i} \\
+
+\beta_{0} = \beta_{00} + \alpha_{j}
+$$
+
+
+
+
+
+$$
+\log\left[ \frac { P( \operatorname{Use} = \operatorname{1} ) }{ 1 - P( \operatorname{Use} = \operatorname{1} ) } \right] = \beta_{0} + \beta_{1}(\operatorname{Stress related to COVID}) + \epsilon_{i} \\
+
+\beta_{0} = \beta_{00} + \alpha_{j}
+$$
