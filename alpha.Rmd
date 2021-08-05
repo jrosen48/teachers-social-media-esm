@@ -1,0 +1,26 @@
+---
+title: "Internal Validity"
+author: "Josh"
+date: "8/5/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(psych)
+drake::loadd(stress_data)
+```
+
+```{r}
+    # mutate(relationships_mean = mean(c_across(q24_1:q24_5), na.rm = TRUE),
+    #        health_mean = mean(c_across(q24_6:q24_7), na.rm = TRUE),
+    #        covid_mean = mean(c_across(q24_8:q24_10), na.rm = TRUE),
+    #        tech_mean = mean(c_across(q25_1:q25_8), na.rm = TRUE),
+    #        all_mean = mean(c_across(q24_1:q25_8), na.rm = TRUE),
+
+psych::alpha(mutate_all(select(stress_data, q24_1:q24_5), as.numeric)) # relationships: .65
+psych::alpha(mutate_all(select(stress_data, q24_6:q24_7), as.numeric)) # health: .70
+psych::alpha(mutate_all(select(stress_data, q24_8:q24_10), as.numeric)) # covid: .58
+psych::alpha(mutate_all(select(stress_data, q25_1:q25_8), as.numeric)) # tech: .83
+psych::alpha(mutate_all(select(stress_data, q24_1:q25_8), as.numeric)) # all: .82
+```
