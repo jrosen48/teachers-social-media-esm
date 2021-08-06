@@ -18,9 +18,9 @@ drake::loadd(stress_data)
     #        tech_mean = mean(c_across(q25_1:q25_8), na.rm = TRUE),
     #        all_mean = mean(c_across(q24_1:q25_8), na.rm = TRUE),
 
-psych::alpha(mutate_all(select(stress_data, q24_1:q24_5), as.numeric)) # relationships: .65
-psych::alpha(mutate_all(select(stress_data, q24_6:q24_7), as.numeric)) # health: .70
-psych::alpha(mutate_all(select(stress_data, q24_8:q24_10), as.numeric)) # covid: .58
-psych::alpha(mutate_all(select(stress_data, q25_1:q25_8), as.numeric)) # tech: .83
-psych::alpha(mutate_all(select(stress_data, q24_1:q25_8), as.numeric)) # all: .82
+psych::alpha(mutate_all(select(stress_data, q24_1:q24_5), as.numeric)) # relationships: .65; 3
+psych::alpha(mutate_all(select(stress_data, q24_6:q24_7), as.numeric)) # health: .70; 2
+psych::alpha(mutate_all(select(stress_data, q24_8:q24_10), as.numeric)) # covid: .58; 3
+psych::alpha(mutate_all(select(stress_data, q25_1:q25_8), as.numeric)) # tech: .83; 6
+psych::alpha(mutate_all(select(stress_data, q24_1:q25_8), as.numeric)) # all: .82; 14
 ```
