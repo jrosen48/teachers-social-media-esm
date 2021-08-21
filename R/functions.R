@@ -100,12 +100,10 @@ plot_subset_of_teachers_how <- function(data_to_plot) {
   data_to_plot %>% 
     ungroup() %>% 
     mutate(email = as.integer(as.factor(email))) %>% 
-    filter(email %in% c(14, 6, 4, 13)) %>% 
+    filter(email %in% c(7, 11)) %>% 
     mutate(email = str_c("Respondent ", email),
-           email = factor(email, levels = c("Respondent 4", 
-                                            "Respondent 6",
-                                            "Respondent 13",
-                                            "Respondent 14"))) %>% 
+           email = factor(email, levels = c("Respondent 7", 
+                                            "Respondent 11"))) %>% 
     ggiraphExtra::ggRadar(aes(group = "platform", facet = "email"), use.label = FALSE) +
     scale_color_discrete(NULL) +
     scale_fill_discrete(NULL) +
